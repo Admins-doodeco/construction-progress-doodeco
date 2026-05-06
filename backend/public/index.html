@@ -165,6 +165,19 @@
           <button @click="showLoginOverlay" class="text-[10px] text-[#0289A4] hover:underline font-bold">Sign
             In</button>
         </div>
+        <input type="file" ref="fileInput" @change="handleFileUpload" accept=".xlsx" class="hidden" />
+        <button v-if="activeTab === 'report' && isEditor" @click="$refs.fileInput.click()"
+          class="flex items-center gap-1 text-purple-600 hover:text-purple-800 font-semibold text-sm transition-colors mr-3"
+          :disabled="importingExcel">
+          <svg v-if="!importingExcel" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+          </svg>
+          <svg v-else class="animate-spin w-4 h-4" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Import Progress
+        </button>
         <button v-if="activeTab === 'report'" @click="downloadExcel"
           class="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-semibold text-sm transition-colors mr-3">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1108,8 +1121,15 @@
                   <td
                     class="px-2 py-1.5 font-semibold text-blue-800 cursor-pointer hover:text-blue-600 underline decoration-blue-200"
                     @click="zoomToTask(task)">{{ task.job_type }}</td>
-                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('progress')"><input type="text" v-model="task.progress" @input="markUpdated(task)"
-                      :disabled="!!historyDate" class="table-input text-right font-bold text-blue-700"></td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('progress')">
+                    <div class="relative flex items-center justify-end w-full h-full min-h-[24px]">
+                      <input type="text" v-model="task.progress" @input="markUpdated(task)" :disabled="!!historyDate"
+                        class="peer table-input text-right font-bold w-full h-full bg-transparent text-transparent focus:text-blue-700 focus:bg-white z-10">
+                      <span class="absolute inset-y-0 right-1 flex items-center pointer-events-none font-bold text-blue-700 peer-focus:opacity-0 z-0">
+                        {{ task.progress ? task.progress + '%' : '' }}
+                      </span>
+                    </div>
+                  </td>
                   <td class="px-1 py-1" v-show="!hiddenColumns.includes('area_finish')"><input type="text" v-model="task.area_finish" @input="markUpdated(task)"
                       :disabled="!!historyDate" class="table-input text-right"></td>
                   <td class="px-1 py-1" v-show="!hiddenColumns.includes('area_remaining')"><input type="text" v-model="task.area_remaining" :title="task.area_remaining"
@@ -1122,8 +1142,15 @@
                     <input type="date" v-model="task.finish_date" @input="markUpdated(task)"
                       :disabled="!!historyDate" class="table-input" :title="fmtDate(task.finish_date)">
                   </td>
-                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('material')"><input type="text" v-model="task.material" @input="markUpdated(task)"
-                      :disabled="!!historyDate" class="table-input text-right"></td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('material')">
+                    <div class="relative flex items-center justify-end w-full h-full min-h-[24px]">
+                      <input type="text" v-model="task.material" @input="markUpdated(task)" :disabled="!!historyDate"
+                        class="peer table-input text-right w-full h-full bg-transparent text-transparent focus:text-gray-700 focus:bg-white z-10">
+                      <span class="absolute inset-y-0 right-1 flex items-center pointer-events-none text-gray-700 peer-focus:opacity-0 z-0">
+                        {{ task.material ? task.material + '%' : '' }}
+                      </span>
+                    </div>
+                  </td>
                   <td class="px-2 py-1.5 supplier-cell" v-show="!hiddenColumns.includes('supplier')">
                     <span v-if="isEditor">{{ task.supplier }}</span>
                     <span v-else class="text-gray-300 italic text-[10px]" title="Sign in as Editor to view">hidden</span>
@@ -1167,7 +1194,7 @@
   </div>
 
   <script>
-    const API_URL = 'http://localhost:3001/api';
+    const API_URL = 'https://construction-progress-doodeco.vercel.app/api';
     const API_KEY = 'CP-SKETCHUP-SECRET-KEY-2024';
 
     // ── Firebase Configuration ─────────────────────────────────────────────
@@ -1758,6 +1785,50 @@
               `${t.location.floor}||${t.location.zone_room}||${t.job_type}`
             );
             window.sketchup.filterModels({ visible_task_keys: visibleKeys });
+          }
+        };
+
+        const importingExcel = ref(false);
+        const fileInput = ref(null);
+
+        const handleFileUpload = async (event) => {
+          const file = event.target.files[0];
+          if (!file) return;
+
+          const confirmed = await showConfirm('Import Data', `Are you sure you want to import data from "${file.name}"? This will overwrite matching tasks.`);
+          if (!confirmed) {
+            event.target.value = '';
+            return;
+          }
+
+          importingExcel.value = true;
+          const formData = new FormData();
+          formData.append('file', file);
+
+          try {
+            const headers = {};
+            if (window.apiKey) headers['x-api-key'] = window.apiKey;
+            else if (window.firebaseIdToken) headers['Authorization'] = `Bearer ${window.firebaseIdToken}`;
+
+            const res = await fetch(`${API_URL}/import-excel`, {
+              method: 'POST',
+              headers,
+              body: formData
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              showStatus(`Import successful! ${data.updatedCount} tasks updated.`);
+              await fetchTasks(); // refresh data
+            } else {
+              const err = await res.json();
+              showAlert('Import Error', err.error || 'Failed to import file');
+            }
+          } catch (e) {
+            showAlert('Import Error', e.message);
+          } finally {
+            importingExcel.value = false;
+            event.target.value = '';
           }
         };
 
@@ -2358,7 +2429,7 @@
           uniqueFloors, uniqueZones, uniqueJobTypes, uniqueSuppliers, uniqueProgresses,
           sortedFilteredReportTasks, filteredLocations, filteredTasks,
           setFilter, hideDropdown, toggleSort, resetFilters, applyFilters,
-          downloadCsv, downloadExcel, fetchHistory, clearHistory,
+          downloadCsv, downloadExcel, handleFileUpload, importingExcel, fileInput, fetchHistory, clearHistory,
           assignLocation, assignTask, unassignItem, saveTask, saveLocation, saveGroupLocation,
           uploadImages, deleteImage, unhideAll, refreshHeatmap, zoomToTask, zoomToZone,
           switchTab, markUpdated, uploadingImages,
