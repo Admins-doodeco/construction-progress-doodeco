@@ -1,16 +1,33 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const multer = require('multer');
-const multerS3 = require('multer-s3');
+// const multerS3 = require('multer-s3');
 const { S3Client, CreateBucketCommand, PutBucketPolicyCommand } = require('@aws-sdk/client-s3');
 const path = require('path');
-const { requireAuth, requireEditor, optionalAuth } = require('./auth');
+const fs = require('fs');
+// const { requireAuth, requireEditor, optionalAuth } = require('./auth');
 const ExcelJS = require('exceljs');
 
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
+
+const getAppConfig = () => ({
+  apiKey: process.env.API_KEY || 'CP-SKETCHUP-SECRET-KEY-2024',
+  apiUrl: process.env.API_URL || null,
+  firebase: {
+    apiKey: process.env.FIREBASE_API_KEY || 'AIzaSyDL4MsO8pbOZiEcILPH7aXO9OZ-a5EdY_c',
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || 'bim-construction-progress.firebaseapp.com',
+    projectId: process.env.FIREBASE_PROJECT_ID_WEB || 'bim-construction-progress',
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'bim-construction-progress.firebasestorage.app',
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '489806675712',
+    appId: process.env.FIREBASE_APP_ID || '1:489806675712:web:3647357179216f5a107de5',
+    measurementId: process.env.FIREBASE_MEASUREMENT_ID || 'G-KE5DVZ1VET'
+  }
+});
+
 
 // S3 Configuration
 const s3 = new S3Client({
@@ -32,7 +49,7 @@ const setBucketPolicy = async () => {
     console.log(`Bucket '${bucketName}' created.`);
   } catch (err) {
     if (err.name !== 'BucketAlreadyOwnedByYou' && err.name !== 'BucketAlreadyExists') {
-      console.error(`Failed to create bucket:`, err);
+      console.error('Failed to create bucket:', err);
     } else {
       console.log(`Bucket '${bucketName}' already exists.`);
     }
@@ -41,13 +58,13 @@ const setBucketPolicy = async () => {
   // Apply public read policy so thumbnails are accessible
   try {
     const policy = {
-      Version: "2012-10-17",
+      Version: '2012-10-17',
       Statement: [
         {
-          Sid: "PublicReadGetObject",
-          Effect: "Allow",
-          Principal: "*",
-          Action: "s3:GetObject",
+          Sid: 'PublicReadGetObject',
+          Effect: 'Allow',
+          Principal: '*',
+          Action: 's3:GetObject',
           Resource: `arn:aws:s3:::${bucketName}/*`
         }
       ]
@@ -58,13 +75,14 @@ const setBucketPolicy = async () => {
     }));
     console.log(`Public read policy applied to '${bucketName}'.`);
   } catch (err) {
-    console.error(`Failed to set bucket policy:`, err);
+    console.error('Failed to set bucket policy:', err);
   }
 };
 
 setBucketPolicy();
 
 // Multer Upload Setup (Max 10 files, Max 5MB per file)
+/*
 const upload = multer({
   storage: multerS3({
     s3: s3,
@@ -80,6 +98,7 @@ const upload = multer({
   }),
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
+*/
 
 const uploadMemory = multer({ storage: multer.memoryStorage() });
 
@@ -87,8 +106,28 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Serve frontend static files
+// Serve frontend with configuration injection
+app.get(['/', '/index.html'], (req, res) => {
+  const config = getAppConfig();
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  try {
+    let html = fs.readFileSync(indexPath, 'utf8');
+    const configScript = `<script>window.__APP_CONFIG__ = ${JSON.stringify(config)};</script>`;
+    html = html.replace('<!-- CONFIG_INJECTION -->', configScript);
+    res.send(html);
+  } catch (e) {
+    console.error('Failed to serve index.html with injection:', e);
+    res.sendFile(indexPath);
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Public Config Endpoint for Frontend
+app.get('/api/config', (req, res) => {
+  res.json(getAppConfig());
+});
+
 
 
 // ── Security Middleware ──────────────────────────────────────────────────────
@@ -128,7 +167,7 @@ const editorOrApiKey = async (req, res, next) => {
       return res.status(403).json({ error: 'Forbidden: Editor role required. Contact your administrator.' });
     }
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ error: 'Unauthorized: Invalid or expired token.' });
   }
 };
@@ -437,7 +476,7 @@ app.post('/api/tasks/:id/images', editorOrApiKey, async (req, res) => {
     const createdImages = [];
     for (const file of images) {
       // Decode base64 (format: data:image/jpeg;base64,/9j/4AAQ...)
-      const matches = file.base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      const matches = file.base64.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
       let buffer, mimeType;
       
       if (matches && matches.length === 3) {
@@ -788,7 +827,7 @@ app.post('/api/defects/:id/images', editorOrApiKey, async (req, res) => {
 
     const createdImages = [];
     for (const file of images) {
-      const matches = file.base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      const matches = file.base64.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
       let buffer, mimeType;
       if (matches && matches.length === 3) {
         mimeType = matches[1];
@@ -962,28 +1001,28 @@ app.get('/api/export-excel', async (req, res) => {
           let startVal = '', finishVal = '', progVal = 0, matVal = 0;
           
           if (task) {
-             startVal = task.start_date || '';
-             finishVal = task.finish_date || '';
-             progVal = parseFloat(task.progress) || 0;
-             matVal = parseFloat(task.material) || 0;
+            startVal = task.start_date || '';
+            finishVal = task.finish_date || '';
+            progVal = parseFloat(task.progress) || 0;
+            matVal = parseFloat(task.material) || 0;
              
-             roomProgressSum += progVal;
-             roomJobCount++;
+            roomProgressSum += progVal;
+            roomJobCount++;
              
-             if (finishVal) {
-               if (!roomMaxDate || new Date(finishVal) > new Date(roomMaxDate)) roomMaxDate = finishVal;
-             }
+            if (finishVal) {
+              if (!roomMaxDate || new Date(finishVal) > new Date(roomMaxDate)) roomMaxDate = finishVal;
+            }
              
-             const tData = jobTotals[jobType];
-             tData.progressSum += progVal;
-             tData.materialSum += matVal;
-             tData.count++;
-             if (startVal) {
-                if (!tData.minDate || new Date(startVal) < new Date(tData.minDate)) tData.minDate = startVal;
-             }
-             if (finishVal) {
-                if (!tData.maxDate || new Date(finishVal) > new Date(tData.maxDate)) tData.maxDate = finishVal;
-             }
+            const tData = jobTotals[jobType];
+            tData.progressSum += progVal;
+            tData.materialSum += matVal;
+            tData.count++;
+            if (startVal) {
+              if (!tData.minDate || new Date(startVal) < new Date(tData.minDate)) tData.minDate = startVal;
+            }
+            if (finishVal) {
+              if (!tData.maxDate || new Date(finishVal) > new Date(tData.maxDate)) tData.maxDate = finishVal;
+            }
           }
           
           const startCell = row.getCell(colIdx);
@@ -1141,7 +1180,7 @@ app.post('/api/import-excel', editorOrApiKey, uploadMemory.single('file'), async
         const rawProgress = row.getCell(colIndex + 2).value;
         const material = row.getCell(colIndex + 3).value;
 
-        let progress = "0";
+        let progress = '0';
         if (rawProgress !== null && rawProgress !== undefined) {
           let num = parseFloat(String(rawProgress).replace('%', ''));
           if (!isNaN(num)) progress = String(num);
@@ -1203,7 +1242,7 @@ app.post('/api/import-excel', editorOrApiKey, uploadMemory.single('file'), async
   }
 });
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error('Express Error:', err);
   res.status(500).json({ error: err.message || 'Internal Server Error' });
 });

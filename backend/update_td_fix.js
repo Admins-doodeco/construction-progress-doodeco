@@ -7,14 +7,14 @@ const cols = [
 ];
 
 cols.forEach(col => {
-  html = html.replace(new RegExp(`</td> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), `</td>`);
-  html = html.replace(new RegExp(`<!-- Start Date --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), `<!-- Start Date -->`);
-  html = html.replace(new RegExp(`<!-- Finish Date --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), `<!-- Finish Date -->`);
-  html = html.replace(new RegExp(`<!-- Material --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), `<!-- Material -->`);
-  html = html.replace(new RegExp(`<!-- Supplier --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), `<!-- Supplier -->`);
-  html = html.replace(new RegExp(`<!-- NCR Zone Summary --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), `<!-- NCR Zone Summary -->`);
-  html = html.replace(new RegExp(`<!-- AS-BUILT \\(task row empty, shows on zone row\\) --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), `<!-- AS-BUILT (task row empty, shows on zone row) -->`);
-  html = html.replace(new RegExp(`<!-- NCR --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), `<!-- NCR -->`);
+  html = html.replace(new RegExp(`</td> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), '</td>');
+  html = html.replace(new RegExp(`<!-- Start Date --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), '<!-- Start Date -->');
+  html = html.replace(new RegExp(`<!-- Finish Date --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), '<!-- Finish Date -->');
+  html = html.replace(new RegExp(`<!-- Material --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), '<!-- Material -->');
+  html = html.replace(new RegExp(`<!-- Supplier --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), '<!-- Supplier -->');
+  html = html.replace(new RegExp(`<!-- NCR Zone Summary --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), '<!-- NCR Zone Summary -->');
+  html = html.replace(new RegExp(`<!-- AS-BUILT \\(task row empty, shows on zone row\\) --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), '<!-- AS-BUILT (task row empty, shows on zone row) -->');
+  html = html.replace(new RegExp(`<!-- NCR --> v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), '<!-- NCR -->');
   
   html = html.replace(new RegExp(`<input type="text" v-model="task.${col}" v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), `<input type="text" v-model="task.${col}"`);
   html = html.replace(new RegExp(`<input type="date" v-model="task.${col}" v-show="!hiddenColumns\\.includes\\('${col}'\\)"`, 'g'), `<input type="date" v-model="task.${col}"`);

@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   const loc = await prisma.location.findFirst({
-    where: { zone_room: "Technologist & PL Office" },
+    where: { zone_room: 'Technologist & PL Office' },
     include: { tasks: true }
   });
   console.log(JSON.stringify(loc, null, 2));

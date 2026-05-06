@@ -16,16 +16,30 @@ const fs = require('fs');
 const serviceAccountPath = path.join(__dirname, 'firebase-service-account.json');
 
 if (!admin.apps.length) {
-  if (fs.existsSync(serviceAccountPath)) {
-    const serviceAccount = require(serviceAccountPath);
+  let serviceAccount;
+
+  // 1. Try to load from environment variable (for Vercel/Production)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } catch (e) {
+      console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT environment variable:', e.message);
+    }
+  }
+  // 2. Fallback to local JSON file
+  else if (fs.existsSync(serviceAccountPath)) {
+    serviceAccount = require(serviceAccountPath);
+  }
+
+  if (serviceAccount) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
-    console.log('✅ Firebase Admin initialized with service account.');
+    console.log('✅ Firebase Admin initialized.');
   } else {
-    console.warn('⚠️  firebase-service-account.json NOT FOUND. Auth middleware will reject all requests.');
+    console.warn('⚠️  Firebase configuration NOT FOUND. Auth middleware will reject all requests.');
     console.warn('    Download from Firebase Console → Project Settings → Service Accounts → Generate new private key');
-    console.warn('    Save as: backend/firebase-service-account.json');
+    console.warn('    Save as: backend/firebase-service-account.json OR set FIREBASE_SERVICE_ACCOUNT env var.');
   }
 }
 
@@ -90,7 +104,7 @@ const optionalAuth = async (req, res, next) => {
   const idToken = authHeader.split('Bearer ')[1];
   try {
     req.user = await admin.auth().verifyIdToken(idToken);
-  } catch (err) {
+  } catch {
     req.user = null;
   }
   next();

@@ -2,10 +2,10 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-  const sourceFloor = "27TH FLOOR";
-  const sourceZone = "Technologist & PL Office";
-  const targetFloor = "27TH FLOOR";
-  const targetZone = "Flavorist Office";
+  const sourceFloor = '27TH FLOOR';
+  const sourceZone = 'Technologist & PL Office';
+  const targetFloor = '27TH FLOOR';
+  const targetZone = 'Flavorist Office';
 
   // 1. Get source location and its tasks
   const sourceLoc = await prisma.location.findFirst({
@@ -14,7 +14,7 @@ async function main() {
   });
 
   if (!sourceLoc) {
-    console.log("Source location not found!");
+    console.log('Source location not found!');
     return;
   }
 
@@ -71,7 +71,7 @@ async function main() {
     }
   }
   
-  console.log("Copy operation completed successfully.");
+  console.log('Copy operation completed successfully.');
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());

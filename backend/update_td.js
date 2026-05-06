@@ -38,7 +38,7 @@ cols.forEach(col => {
 // Group row Summary colspan
 html = html.replace(
   /(<td class="px-2 py-2 text-gray-400 italic" colspan=")3(">— Summary —<\/td>)/g,
-  `<td class="px-2 py-2 text-gray-400 italic" :colspan="1 + (hiddenColumns.includes('remark') ? 0 : 1) + (hiddenColumns.includes('updated_date') ? 0 : 1)">— Summary —</td>`
+  '<td class="px-2 py-2 text-gray-400 italic" :colspan="1 + (hiddenColumns.includes(\'remark\') ? 0 : 1) + (hiddenColumns.includes(\'updated_date\') ? 0 : 1)">— Summary —</td>'
 );
 
 fs.writeFileSync('../extension/construction_progress/ui/inspector.html', html);

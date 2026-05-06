@@ -56,20 +56,20 @@ async function copyZone(floor, sourceZone, targetZone) {
 }
 
 async function main() {
-  const f24 = "24TH FLOOR";
+  const f24 = '24TH FLOOR';
   
   // 1. ชั้น 24
-  await copyZone(f24, "Construction", "Construction 2");
-  await copyZone(f24, "Meeting room 10 seats", "Meeting room 10 seats 2");
-  await copyZone(f24, "Spare Office", "Spare Office 2");
-  await copyZone(f24, "Spare Office", "Spare Office 3");
-  await copyZone(f24, "Storage", "Storage 2");
-  await copyZone(f24, "Storage", "Storage 3"); // Assuming typo correction from Spare Office 3 to Storage 3
+  await copyZone(f24, 'Construction', 'Construction 2');
+  await copyZone(f24, 'Meeting room 10 seats', 'Meeting room 10 seats 2');
+  await copyZone(f24, 'Spare Office', 'Spare Office 2');
+  await copyZone(f24, 'Spare Office', 'Spare Office 3');
+  await copyZone(f24, 'Storage', 'Storage 2');
+  await copyZone(f24, 'Storage', 'Storage 3'); // Assuming typo correction from Spare Office 3 to Storage 3
 
   // 2. ชั้น 27
-  const f27 = "27TH FLOOR";
+  const f27 = '27TH FLOOR';
   const loc27 = await prisma.location.findFirst({
-    where: { floor: f27, zone_room: "Flavorist Office" }
+    where: { floor: f27, zone_room: 'Flavorist Office' }
   });
 
   if (loc27) {
@@ -88,7 +88,7 @@ async function main() {
     console.log(`Location not found for deletion: ${f27} - Flavorist Office`);
   }
   
-  console.log("Database update completed.");
+  console.log('Database update completed.');
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());

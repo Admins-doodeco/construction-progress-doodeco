@@ -38,6 +38,9 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+backend/.env
+backend/prod.env
+backend/prod.env.local
 
 # Sensitive files
 firebase-service-account.json

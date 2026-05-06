@@ -22,7 +22,7 @@ async function main() {
     .on('end', async () => {
       console.log(`Parsed ${results.length} rows. Starting database insertion (with deduplication)...`);
 
-      let insertedLocations = 0;
+      // let insertedLocations = 0;
       let upsertedTasks = 0;
 
       for (const row of results) {
@@ -93,7 +93,7 @@ async function main() {
         }
       }
 
-      console.log(`✅ Success! Processed and deduplicated tasks.`);
+      console.log('✅ Success! Processed and deduplicated tasks.');
       console.log(`Total Unique Tasks Processed: ${upsertedTasks}`);
 
       await prisma.$disconnect();
