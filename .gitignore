@@ -38,3 +38,8 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Sensitive files
+firebase-service-account.json
+*.db
+*.log
