@@ -30,15 +30,22 @@ const getAppConfig = () => ({
 
 
 // S3 Configuration
-const s3 = new S3Client({
+const s3Config = {
   region: process.env.S3_REGION || 'us-east-1',
-  endpoint: process.env.S3_ENDPOINT || 'http://localhost:9000',
-  forcePathStyle: true, // Required for MinIO
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY || 'minioadmin',
     secretAccessKey: process.env.S3_SECRET_KEY || 'minioadmin123'
   }
-});
+};
+
+// Only use endpoint and forcePathStyle if S3_ENDPOINT is specifically provided (e.g. for MinIO)
+if (process.env.S3_ENDPOINT && process.env.S3_ENDPOINT.trim() !== '') {
+  s3Config.endpoint = process.env.S3_ENDPOINT;
+  s3Config.forcePathStyle = true;
+}
+
+const s3 = new S3Client(s3Config);
+
 
 // Auto-create bucket for local dev if it doesn't exist, and set public-read policy
 const bucketName = process.env.S3_BUCKET_NAME || 'construction-images';
