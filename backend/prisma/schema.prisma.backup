@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // ==========================================
@@ -14,9 +14,7 @@ model Location {
   id        String   @id @default(uuid())
   floor     String
   zone_room String
-  as_built  String?  @default("On Process")
   tasks     Task[]
-  defects   Defect[]
 
   @@unique([floor, zone_room])
 }
@@ -40,116 +38,7 @@ model Task {
   
   location_id     String
   location        Location @relation(fields: [location_id], references: [id])
-  
-  updated_date    String?  @default("2026-04-28")
-  histories       TaskHistory[]
-  images          TaskImage[]
-  defects         Defect[]
 
   // Deduplication constraint
   @@unique([location_id, job_type])
-}
-
-// ==========================================
-// VDC Progress Task History
-// ==========================================
-model TaskHistory {
-  id              String   @id @default(uuid())
-  task_id         String
-  
-  progress        String?
-  area_finish     String?
-  area_remaining  String?
-  manpower_plan   String?
-  manpower_actual String?
-  material        String?
-  supplier        String?
-  remark          String?
-  start_date      String?
-  finish_date     String?
-  
-  updated_date    String
-  
-  task            Task     @relation(fields: [task_id], references: [id], onDelete: Cascade)
-
-  @@unique([task_id, updated_date])
-}
-
-// ==========================================
-// VDC Progress Task Images
-// ==========================================
-model TaskImage {
-  id        String   @id @default(uuid())
-  task_id   String
-  file_url  String
-  file_name String
-  size_bytes Int?
-  uploaded_at DateTime @default(now())
-
-  task      Task     @relation(fields: [task_id], references: [id], onDelete: Cascade)
-}
-
-// ==========================================
-// Defect List
-// ==========================================
-model Defect {
-  id                      String   @id @default(uuid())
-  number                  Int      // 1-99, auto-generated per location
-  number_code             String   // e.g. "01 (Flooring - ROOM A - 27TH FLOOR)"
-  name                    String
-  classification          String   @default("Minor") // "Major" | "Minor"
-  status                  String   @default("Not Start") // "Not Start" | "In Progress" | "Done"
-  start_date              String?
-  finish_date             String?
-  remark                  String?
-  supplier                String?  // auto-filled from related Task.supplier
-  sketchup_instance_name  String?  // = number_code after SketchUp assign
-  updated_date            String?  // YYYY-MM-DD, used for history snapshots
-
-  location_id             String
-  location                Location @relation(fields: [location_id], references: [id])
-
-  task_id                 String?  // optional FK → Task (the job_type this defect belongs to)
-  task                    Task?    @relation(fields: [task_id], references: [id])
-
-  images                  DefectImage[]
-  histories               DefectHistory[]
-
-  @@unique([location_id, number])
-}
-
-// ==========================================
-// Defect Images
-// ==========================================
-model DefectImage {
-  id          String   @id @default(uuid())
-  defect_id   String
-  file_url    String
-  file_name   String
-  size_bytes  Int?
-  uploaded_at DateTime @default(now())
-
-  defect      Defect   @relation(fields: [defect_id], references: [id], onDelete: Cascade)
-}
-
-// ==========================================
-// Defect History
-// ==========================================
-model DefectHistory {
-  id             String   @id @default(uuid())
-  defect_id      String
-
-  name           String?
-  classification String?
-  status         String?
-  start_date     String?
-  finish_date    String?
-  remark         String?
-  supplier       String?
-
-  updated_date   String
-
-  defect         Defect   @relation(fields: [defect_id], references: [id], onDelete: Cascade)
-
-  @@unique([defect_id, updated_date])
 }

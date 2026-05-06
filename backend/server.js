@@ -81,6 +81,8 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+const uploadMemory = multer({ storage: multer.memoryStorage() });
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -1084,6 +1086,119 @@ app.get('/api/export-excel', async (req, res) => {
     res.end();
   } catch (error) {
     console.error('Export error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Import Report from Excel
+app.post('/api/import-excel', editorOrApiKey, uploadMemory.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(req.file.buffer);
+    const sheet = workbook.getWorksheet(1); // 'Report'
+    if (!sheet) return res.status(400).json({ error: 'Sheet 1 not found' });
+
+    const jobTypes = {};
+    let lastJobType = null;
+    for (let col = 3; col <= sheet.columnCount; col++) {
+      let val = sheet.getCell(1, col).value;
+      let jobName = null;
+      if (val && typeof val === 'object' && val.richText) {
+        jobName = val.richText.map(t => t.text).join('');
+      } else if (val) {
+        jobName = String(val);
+      }
+      
+      if (jobName && jobName !== 'Progress By Room' && jobName !== 'Completion date by room' && jobName !== 'null') {
+        if (jobName !== lastJobType) {
+          jobTypes[col] = jobName;
+          lastJobType = jobName;
+        }
+      }
+    }
+
+    const locations = await prisma.location.findMany();
+    const locMap = {};
+    locations.forEach(l => locMap[`${l.floor}||${l.zone_room}`] = l.id);
+
+    const updates = [];
+
+    for (let rowNum = 3; rowNum <= sheet.rowCount; rowNum++) {
+      const row = sheet.getRow(rowNum);
+      const floor = row.getCell(1).value;
+      const zone = row.getCell(2).value;
+
+      if (!floor || !zone || (typeof zone === 'string' && zone.includes('Zones'))) continue;
+
+      const locId = locMap[`${floor}||${zone}`];
+      if (!locId) continue;
+
+      for (const [colIndexStr, jobType] of Object.entries(jobTypes)) {
+        const colIndex = parseInt(colIndexStr);
+        const startDate = row.getCell(colIndex).value;
+        const finishDate = row.getCell(colIndex + 1).value;
+        const rawProgress = row.getCell(colIndex + 2).value;
+        const material = row.getCell(colIndex + 3).value;
+
+        let progress = "0";
+        if (rawProgress !== null && rawProgress !== undefined) {
+          let num = parseFloat(String(rawProgress).replace('%', ''));
+          if (!isNaN(num)) progress = String(num);
+        }
+
+        const formatDate = (val) => {
+          if (!val) return null;
+          if (val instanceof Date) {
+            if (isNaN(val.getTime())) return null;
+            const m = val.getMonth() + 1;
+            const d = val.getDate();
+            return `${val.getFullYear()}-${m < 10 ? '0'+m : m}-${d < 10 ? '0'+d : d}`;
+          }
+          return String(val);
+        };
+
+        const existingTask = await prisma.task.findFirst({
+          where: { location_id: locId, job_type: jobType }
+        });
+
+        if (existingTask) {
+          const parsedStartDate = formatDate(startDate);
+          const parsedFinishDate = formatDate(finishDate);
+          const parsedMaterial = material ? String(material).replace('%', '').trim() : null;
+
+          const hasChanged = 
+            existingTask.progress !== progress ||
+            existingTask.start_date !== parsedStartDate ||
+            existingTask.finish_date !== parsedFinishDate ||
+            existingTask.material !== parsedMaterial;
+
+          if (hasChanged) {
+            updates.push(prisma.task.update({
+              where: { id: existingTask.id },
+              data: {
+                progress: progress,
+                start_date: parsedStartDate,
+                finish_date: parsedFinishDate,
+                material: parsedMaterial,
+                updated_date: new Date().toISOString().split('T')[0]
+              }
+            }));
+          }
+        }
+      }
+    }
+
+    if (updates.length > 0) {
+      // Execute in batches to prevent transaction size limits
+      for (let i = 0; i < updates.length; i += 100) {
+        await prisma.$transaction(updates.slice(i, i + 100));
+      }
+    }
+    
+    res.json({ success: true, updatedCount: updates.length });
+  } catch (error) {
+    console.error('Import error:', error);
     res.status(500).json({ error: error.message });
   }
 });
