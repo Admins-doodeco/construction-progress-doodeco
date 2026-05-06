@@ -170,14 +170,11 @@
           class="flex items-center gap-1 text-purple-600 hover:text-purple-800 font-semibold text-sm transition-colors mr-3"
           :disabled="importingExcel">
           <svg v-if="!importingExcel" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
           </svg>
           <svg v-else class="animate-spin w-4 h-4" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-            </path>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
           Import Progress
         </button>
@@ -209,8 +206,7 @@
           </svg>
           Unhide All
         </button>
-        <button v-if="inSketchup" @click="refreshHeatmap" class="btn flex items-center gap-1"
-          :disabled="loadingHeatmap">
+        <button v-if="inSketchup" @click="refreshHeatmap" class="btn flex items-center gap-1" :disabled="loadingHeatmap">
           <svg v-if="!loadingHeatmap" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01">
@@ -353,57 +349,37 @@
           <div v-if="assignMode === 'job'">
             <div class="mb-3">
               <label class="label">Search Job Type</label>
-              <div
-                class="text-[10px] bg-blue-50 text-blue-700 p-1.5 rounded border border-blue-100 mb-2 flex gap-1 items-start"
-                v-if="selection.parent_floor">
-                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+              <div class="text-[10px] bg-blue-50 text-blue-700 p-1.5 rounded border border-blue-100 mb-2 flex gap-1 items-start" v-if="selection.parent_floor">
+                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span>Auto-filtered by parent Group's zone.</span>
               </div>
               <div class="relative">
                 <input type="text" v-model="searchQuery" class="input-field pl-7" placeholder="Type to filter...">
-                <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2 top-2.5" fill="none" stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
+                <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               </div>
             </div>
             <div class="mb-3 border border-gray-200 rounded-md overflow-hidden bg-white">
               <select v-model="selectedTaskId" class="w-full p-1.5 outline-none text-xs h-40 bg-white" size="6">
-                <option v-for="task in filteredTasks" :key="task.id" :value="task.id"
-                  class="p-1.5 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0">
+                <option v-for="task in filteredTasks" :key="task.id" :value="task.id" class="p-1.5 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0">
                   {{ task.job_type }}
                 </option>
               </select>
             </div>
             <div v-if="isEditor">
-              <button class="btn w-full flex justify-center items-center gap-1.5" @click="assignTask"
-                :disabled="!selectedTaskId">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+              <button class="btn w-full flex justify-center items-center gap-1.5" @click="assignTask" :disabled="!selectedTaskId">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Assign Task
               </button>
             </div>
-            <div v-else
-              class="text-center text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg py-2 px-3 font-medium">
+            <div v-else class="text-center text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg py-2 px-3 font-medium">
               🔒 Sign in as Editor to assign tasks
             </div>
           </div>
 
           <!-- Assign as Defect -->
           <div v-if="assignMode === 'defect'">
-            <div v-if="!selection.parent_floor"
-              class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3 flex gap-1.5 items-start">
-              <svg class="w-3.5 h-3.5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                </path>
-              </svg>
+            <div v-if="!selection.parent_floor" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3 flex gap-1.5 items-start">
+              <svg class="w-3.5 h-3.5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
               <span>Select this component inside a mapped Zone Group to see its defect list.</span>
             </div>
             <div v-else>
@@ -415,20 +391,14 @@
               </div>
               <div v-else class="mb-3 border border-red-200 rounded-md overflow-hidden bg-white">
                 <select v-model="selectedDefectId" class="w-full p-1.5 outline-none text-xs h-40 bg-white" size="6">
-                  <option v-for="d in assignableDefects" :key="d.id" :value="d.id"
-                    class="p-1.5 hover:bg-red-50 cursor-pointer border-b border-gray-50 last:border-0">
+                  <option v-for="d in assignableDefects" :key="d.id" :value="d.id" class="p-1.5 hover:bg-red-50 cursor-pointer border-b border-gray-50 last:border-0">
                     {{ String(d.number).padStart(2,'0') }} — {{ d.name }} ({{ d.classification }})
                   </option>
                 </select>
               </div>
               <div v-if="isEditor && assignableDefects.length > 0">
-                <button
-                  class="btn w-full flex justify-center items-center gap-1.5 !bg-gradient-to-r !from-red-500 !to-rose-600 hover:!from-red-600 hover:!to-rose-700"
-                  @click="assignDefect" :disabled="!selectedDefectId">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
+                <button class="btn w-full flex justify-center items-center gap-1.5 !bg-gradient-to-r !from-red-500 !to-rose-600 hover:!from-red-600 hover:!to-rose-700" @click="assignDefect" :disabled="!selectedDefectId">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                   Assign Defect
                 </button>
               </div>
@@ -443,10 +413,8 @@
           <!-- Header: Job → Zone - Floor -->
           <div class="flex justify-between items-start mb-2">
             <div>
-              <h2 class="text-base font-bold text-red-700">{{ currentDefect.task ? currentDefect.task.job_type :
-                'Defect' }}</h2>
-              <p class="text-[10px] text-gray-500 font-bold uppercase tracking-tight">{{
-                currentDefect.location.zone_room }} — {{ currentDefect.location.floor }}</p>
+              <h2 class="text-base font-bold text-red-700">{{ currentDefect.task ? currentDefect.task.job_type : 'Defect' }}</h2>
+              <p class="text-[10px] text-gray-500 font-bold uppercase tracking-tight">{{ currentDefect.location.zone_room }} — {{ currentDefect.location.floor }}</p>
             </div>
             <button v-if="isEditor" @click="unassignDefectItem" class="btn-red">Unassign</button>
           </div>
@@ -461,24 +429,21 @@
             <!-- Name -->
             <div>
               <label class="label text-red-700">Defect Name</label>
-              <input type="text" v-model="currentDefect.name" @input="defectUpdated = true"
-                class="input-field border-red-300 bg-red-50/50">
+              <input type="text" v-model="currentDefect.name" @input="defectUpdated = true" class="input-field border-red-300 bg-red-50/50">
             </div>
 
             <!-- Class + Status -->
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="label">Classification</label>
-                <select v-model="currentDefect.classification" @change="defectUpdated = true" class="input-field"
-                  :disabled="!isEditor">
+                <select v-model="currentDefect.classification" @change="defectUpdated = true" class="input-field" :disabled="!isEditor">
                   <option value="Major">🔴 Major</option>
                   <option value="Minor">🟡 Minor</option>
                 </select>
               </div>
               <div>
                 <label class="label">Status</label>
-                <select v-model="currentDefect.status" @change="defectUpdated = true" class="input-field"
-                  :disabled="!isEditor">
+                <select v-model="currentDefect.status" @change="defectUpdated = true" class="input-field" :disabled="!isEditor">
                   <option value="Not Start">Not Start</option>
                   <option value="In Progress">In Progress</option>
                   <option value="Done">Done</option>
@@ -488,26 +453,20 @@
 
             <!-- Dates -->
             <div class="grid grid-cols-2 gap-3 p-3 border border-slate-200 rounded-xl bg-slate-50/80">
-              <div><label class="label">Start Date</label><input type="date" v-model="currentDefect.start_date"
-                  @input="defectUpdated = true" class="input-field" :disabled="!isEditor"></div>
-              <div><label class="label">Finish Date</label><input type="date" v-model="currentDefect.finish_date"
-                  @input="defectUpdated = true" class="input-field" :disabled="!isEditor"></div>
+              <div><label class="label">Start Date</label><input type="date" v-model="currentDefect.start_date" @input="defectUpdated = true" class="input-field" :disabled="!isEditor"></div>
+              <div><label class="label">Finish Date</label><input type="date" v-model="currentDefect.finish_date" @input="defectUpdated = true" class="input-field" :disabled="!isEditor"></div>
             </div>
 
             <!-- Supplier + Remark -->
             <div class="space-y-2 p-3 border border-slate-200 rounded-xl bg-slate-50/80">
               <div>
-                <label class="label flex justify-between"><span>Supplier</span><span
-                    class="text-slate-400 font-normal lowercase tracking-normal">(read-only)</span></label>
-                <input v-if="isEditor" type="text" v-model="currentDefect.supplier"
-                  class="input-field bg-slate-100/70 text-slate-500 cursor-not-allowed" readonly>
-                <div v-else class="input-field bg-slate-100/70 text-slate-300 italic text-xs py-2">hidden (Sign in as
-                  Editor to view)</div>
+                <label class="label flex justify-between"><span>Supplier</span><span class="text-slate-400 font-normal lowercase tracking-normal">(read-only)</span></label>
+                <input v-if="isEditor" type="text" v-model="currentDefect.supplier" class="input-field bg-slate-100/70 text-slate-500 cursor-not-allowed" readonly>
+                <div v-else class="input-field bg-slate-100/70 text-slate-300 italic text-xs py-2">hidden (Sign in as Editor to view)</div>
               </div>
               <div>
                 <label class="label">Remark</label>
-                <textarea v-model="currentDefect.remark" rows="2" @input="defectUpdated = true"
-                  class="input-field resize-none" :disabled="!isEditor"></textarea>
+                <textarea v-model="currentDefect.remark" rows="2" @input="defectUpdated = true" class="input-field resize-none" :disabled="!isEditor"></textarea>
               </div>
             </div>
 
@@ -518,30 +477,18 @@
                 <span class="text-[10px] text-slate-400 font-normal normal-case">Max 5MB per file</span>
               </label>
               <div v-if="currentDefect.images && currentDefect.images.length > 0" class="flex flex-wrap gap-2 mb-2">
-                <div v-for="img in currentDefect.images" :key="img.id"
-                  class="relative group w-16 h-16 border border-slate-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                  <a :href="img.file_url" target="_blank"><img :src="img.file_url" class="object-cover w-full h-full"
-                      :alt="img.file_name" /></a>
-                  <button @click.prevent="deleteDefectImage(img.id)"
-                    class="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white rounded-bl-lg p-1 opacity-0 group-hover:opacity-100 transition-all">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                      </path>
-                    </svg>
+                <div v-for="img in currentDefect.images" :key="img.id" class="relative group w-16 h-16 border border-slate-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <a :href="img.file_url" target="_blank"><img :src="img.file_url" class="object-cover w-full h-full" :alt="img.file_name" /></a>
+                  <button @click.prevent="deleteDefectImage(img.id)" class="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white rounded-bl-lg p-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                   </button>
                 </div>
               </div>
               <input type="file" multiple accept="image/*" @change="uploadDefectImages($event)"
                 :disabled="currentDefect.images && currentDefect.images.length >= 10"
                 class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 cursor-pointer transition-colors mt-2">
-              <div v-if="uploadingDefectImages"
-                class="text-[10px] text-red-600 mt-1.5 flex items-center gap-1 font-medium">
-                <svg class="animate-spin h-3 w-3" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                  </path>
-                </svg>
+              <div v-if="uploadingDefectImages" class="text-[10px] text-red-600 mt-1.5 flex items-center gap-1 font-medium">
+                <svg class="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 Uploading...
               </div>
             </div>
@@ -557,26 +504,19 @@
               <p v-if="currentDefect.histories && currentDefect.histories.length > 0"
                 class="text-[10px] text-amber-600 mt-1.5">
                 📅 {{ currentDefect.histories.length }} snapshot(s) saved
-                — latest: {{ currentDefect.histories.slice().sort((a,b) =>
-                b.updated_date.localeCompare(a.updated_date))[0].updated_date }}
+                — latest: {{ currentDefect.histories.slice().sort((a,b) => b.updated_date.localeCompare(a.updated_date))[0].updated_date }}
               </p>
             </div>
 
             <!-- Save -->
             <div v-if="isEditor">
-              <button
-                class="btn w-full flex justify-center items-center gap-2 mt-2 py-3 !text-base !font-bold !bg-gradient-to-r !from-red-500 !to-rose-600 hover:!from-red-600 hover:!to-rose-700 shadow-md"
+              <button class="btn w-full flex justify-center items-center gap-2 mt-2 py-3 !text-base !font-bold !bg-gradient-to-r !from-red-500 !to-rose-600 hover:!from-red-600 hover:!to-rose-700 shadow-md"
                 @click="saveDefect">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                    d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
-                  </path>
-                </svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                 Save Defect
               </button>
             </div>
-            <div v-else
-              class="text-center text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg py-2.5 px-3 font-medium">
+            <div v-else class="text-center text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg py-2.5 px-3 font-medium">
               🔒 Read-only — Sign in as Editor to save changes
             </div>
           </div>
@@ -611,9 +551,7 @@
               <option value="0%">0%</option>
             </select>
             <button v-if="isEditor" class="btn w-full flex justify-center items-center gap-1.5" @click="saveLocation">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-              </svg>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
               Save AS-BUILT Status
             </button>
           </div>
@@ -628,8 +566,7 @@
                     <th class="px-2 py-1.5 text-left font-bold text-gray-600 uppercase">Model</th>
                     <th class="px-2 py-1.5 text-left font-bold text-gray-600 uppercase">Job Type</th>
                     <th class="px-2 py-1.5 text-left font-bold text-gray-600 uppercase">Progress</th>
-                    <th class="px-2 py-1.5 text-center font-bold text-orange-600 uppercase"
-                      title="Major Defects: Done / Total">PUNCH LIST</th>
+                    <th class="px-2 py-1.5 text-center font-bold text-orange-600 uppercase" title="Major Defects: Done / Total">PUNCH LIST</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -645,8 +582,7 @@
                       <span v-else class="text-gray-300">—</span>
                     </td>
                     <td class="px-2 py-1.5 font-medium text-gray-800">
-                      <span v-if="task.sketchup_mapped"
-                        class="text-[10px] text-blue-600 font-bold underline cursor-pointer hover:text-blue-800 transition-colors"
+                      <span v-if="task.sketchup_mapped" class="text-[10px] text-blue-600 font-bold underline cursor-pointer hover:text-blue-800 transition-colors"
                         @click="zoomToJobFromZone(task)">
                         {{ task.job_type }}
                       </span>
@@ -683,10 +619,8 @@
             </div>
 
             <!-- Add Defect Form -->
-            <transition enter-active-class="transition duration-200" enter-from-class="opacity-0 -translate-y-1"
-              enter-to-class="opacity-100 translate-y-0">
-              <div v-if="showAddDefectForm && isEditor"
-                class="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl space-y-2">
+            <transition enter-active-class="transition duration-200" enter-from-class="opacity-0 -translate-y-1" enter-to-class="opacity-100 translate-y-0">
+              <div v-if="showAddDefectForm && isEditor" class="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl space-y-2">
                 <div>
                   <label class="label">Defect Name <span class="text-red-500">*</span></label>
                   <input type="text" v-model="defectForm.name" class="input-field" placeholder="Describe the defect...">
@@ -717,28 +651,21 @@
                     </select>
                   </div>
                   <div>
-                    <label class="label flex justify-between"><span>Supplier</span><span
-                        class="text-slate-400 font-normal lowercase tracking-normal">(auto-fill)</span></label>
-                    <input type="text" v-model="defectForm.supplier" class="input-field"
-                      placeholder="Auto from Job Type">
+                    <label class="label flex justify-between"><span>Supplier</span><span class="text-slate-400 font-normal lowercase tracking-normal">(auto-fill)</span></label>
+                    <input type="text" v-model="defectForm.supplier" class="input-field" placeholder="Auto from Job Type">
                   </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
-                  <div><label class="label">Start Date</label><input type="date" v-model="defectForm.start_date"
-                      class="input-field"></div>
-                  <div><label class="label">Finish Date</label><input type="date" v-model="defectForm.finish_date"
-                      class="input-field"></div>
+                  <div><label class="label">Start Date</label><input type="date" v-model="defectForm.start_date" class="input-field"></div>
+                  <div><label class="label">Finish Date</label><input type="date" v-model="defectForm.finish_date" class="input-field"></div>
                 </div>
                 <div>
                   <label class="label">Remark</label>
-                  <textarea v-model="defectForm.remark" rows="2" class="input-field resize-none"
-                    placeholder="Additional details..."></textarea>
+                  <textarea v-model="defectForm.remark" rows="2" class="input-field resize-none" placeholder="Additional details..."></textarea>
                 </div>
                 <button @click="createDefect" :disabled="!defectForm.name.trim()"
                   class="btn w-full flex justify-center items-center gap-1.5 !bg-gradient-to-r !from-red-500 !to-rose-600 hover:!from-red-600 hover:!to-rose-700">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                  </svg>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                   Create Defect
                 </button>
               </div>
@@ -750,57 +677,44 @@
                 <thead class="bg-red-50">
                   <tr>
                     <th class="px-2 py-1.5 text-center font-bold text-red-700 uppercase w-8">Model</th>
-                    <th @click="toggleDefectSort('classification')"
-                      class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
-                      Class <span v-if="defectSort.key==='classification'" class="text-[8px]">{{
-                        defectSort.order==='asc'?'▲':'▼' }}</span>
+                    <th @click="toggleDefectSort('classification')" class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
+                      Class <span v-if="defectSort.key==='classification'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼' }}</span>
                     </th>
-                    <th @click="toggleDefectSort('name')"
-                      class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
-                      Name <span v-if="defectSort.key==='name'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼'
-                        }}</span>
+                    <th @click="toggleDefectSort('name')" class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
+                      Name <span v-if="defectSort.key==='name'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼' }}</span>
                     </th>
-                    <th @click="toggleDefectSort('job')"
-                      class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
-                      Job <span v-if="defectSort.key==='job'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼'
-                        }}</span>
+                    <th @click="toggleDefectSort('job')" class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
+                      Job <span v-if="defectSort.key==='job'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼' }}</span>
                     </th>
-                    <th @click="toggleDefectSort('status')"
-                      class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
-                      Status <span v-if="defectSort.key==='status'" class="text-[8px]">{{
-                        defectSort.order==='asc'?'▲':'▼' }}</span>
+                    <th @click="toggleDefectSort('status')" class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
+                      Status <span v-if="defectSort.key==='status'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼' }}</span>
                     </th>
-                    <th @click="toggleDefectSort('finish_date')"
-                      class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
-                      Finish <span v-if="defectSort.key==='finish_date'" class="text-[8px]">{{
-                        defectSort.order==='asc'?'▲':'▼' }}</span>
+                    <th @click="toggleDefectSort('finish_date')" class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
+                      Finish <span v-if="defectSort.key==='finish_date'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼' }}</span>
                     </th>
-                    <th @click="toggleDefectSort('supplier')"
-                      class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
-                      Supplier <span v-if="defectSort.key==='supplier'" class="text-[8px]">{{
-                        defectSort.order==='asc'?'▲':'▼' }}</span>
+                    <th @click="toggleDefectSort('supplier')" class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
+                      Supplier <span v-if="defectSort.key==='supplier'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼' }}</span>
                     </th>
                     <th v-if="isEditor" class="px-2 py-1.5 w-6"></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-red-100">
                   <tr v-for="defect in sortedLocationDefects" :key="defect.id"
-                    class="hover:bg-red-50/60 transition-colors cursor-pointer" @click="openDefectDetail(defect)">
+                    class="hover:bg-red-50/60 transition-colors cursor-pointer"
+                    @click="openDefectDetail(defect)">
                     <!-- Model column: assigned indicator + click to zoom -->
                     <td class="px-2 py-1.5 text-center" @click.stop>
-                      <button v-if="defect.sketchup_instance_name" @click="zoomToDefectItem(defect)"
+                      <button v-if="defect.sketchup_instance_name"
+                        @click="zoomToDefectItem(defect)"
                         class="text-emerald-500 hover:text-emerald-700 transition-colors" title="Navigate to model">
                         <svg class="w-3.5 h-3.5 inline" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clip-rule="evenodd"></path>
+                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                         </svg>
                       </button>
                       <span v-else class="text-gray-300">—</span>
                     </td>
                     <td class="px-2 py-1.5">
-                      <span
-                        :class="defect.classification === 'Major' ? 'bg-red-100 text-red-700 border-red-300' : 'bg-amber-100 text-amber-700 border-amber-300'"
+                      <span :class="defect.classification === 'Major' ? 'bg-red-100 text-red-700 border-red-300' : 'bg-amber-100 text-amber-700 border-amber-300'"
                         class="px-1.5 py-0.5 rounded text-[10px] font-bold border">
                         {{ defect.classification === 'Major' ? '🔴 M' : '🟡 m' }}
                       </span>
@@ -815,9 +729,7 @@
                       </span>
                       <span v-else class="font-medium text-gray-800">{{ defect.name }}</span>
                     </td>
-                    <td class="px-2 py-1.5 text-gray-500 max-w-[80px] truncate"
-                      :title="defect.task ? defect.task.job_type : ''">{{ defect.task ? defect.task.job_type : '—' }}
-                    </td>
+                    <td class="px-2 py-1.5 text-gray-500 max-w-[80px] truncate" :title="defect.task ? defect.task.job_type : ''">{{ defect.task ? defect.task.job_type : '—' }}</td>
                     <td class="px-2 py-1.5">
                       <span :class="{
                         'bg-gray-100 text-gray-600': defect.status === 'Not Start',
@@ -826,14 +738,12 @@
                       }" class="px-1.5 py-0.5 rounded text-[10px] font-semibold">{{ defect.status }}</span>
                     </td>
                     <td class="px-2 py-1.5 text-gray-500">{{ defect.finish_date || '—' }}</td>
-                    <td class="px-2 py-1.5 text-gray-500 max-w-[80px] truncate"
-                      :title="isEditor ? defect.supplier : ''">
+                    <td class="px-2 py-1.5 text-gray-500 max-w-[80px] truncate" :title="isEditor ? defect.supplier : ''">
                       <span v-if="isEditor">{{ defect.supplier || '—' }}</span>
                       <span v-else class="text-gray-300 italic text-[9px]">—</span>
                     </td>
                     <td v-if="isEditor" class="px-2 py-1.5 text-center" @click.stop>
-                      <button @click="deleteDefect(defect)"
-                        class="text-red-400 hover:text-red-600 transition-colors font-bold text-sm leading-none">×</button>
+                      <button @click="deleteDefect(defect)" class="text-red-400 hover:text-red-600 transition-colors font-bold text-sm leading-none">×</button>
                     </td>
                   </tr>
                 </tbody>
@@ -899,8 +809,7 @@
                     class="text-slate-400 font-normal lowercase tracking-normal">(read-only)</span></label>
                 <input v-if="isEditor" type="text" v-model="currentTask.supplier"
                   class="input-field bg-slate-100/70 text-slate-500 cursor-not-allowed" readonly>
-                <div v-else class="input-field bg-slate-100/70 text-slate-300 italic text-xs py-2">hidden (Sign in as
-                  Editor to view)</div>
+                <div v-else class="input-field bg-slate-100/70 text-slate-300 italic text-xs py-2">hidden (Sign in as Editor to view)</div>
               </div>
               <div><label class="label">Remark</label><textarea v-model="currentTask.remark" rows="2"
                   class="input-field resize-none" @input="markUpdated(currentTask)"></textarea></div>
@@ -1026,21 +935,16 @@
         <button @click="collapseAll"
           class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 px-1 transition-colors">▲ Collapse
           All</button>
-
+          
         <div class="h-4 w-px bg-gray-300 mx-1"></div>
 
         <!-- Columns Dropdown -->
         <div class="relative group">
           <button @click="showColDropdown = !showColDropdown"
             class="flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 rounded text-[10px] hover:bg-gray-50 transition-colors">
-            <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2">
-              </path>
-            </svg>
+            <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
             <span class="font-bold text-gray-600">Columns</span>
-            <span v-if="hiddenColumns.length" class="bg-indigo-100 text-indigo-700 px-1 rounded">{{ hiddenColumns.length
-              }} hidden</span>
+            <span v-if="hiddenColumns.length" class="bg-indigo-100 text-indigo-700 px-1 rounded">{{ hiddenColumns.length }} hidden</span>
           </button>
           <div v-if="showColDropdown"
             class="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded shadow-xl z-[60] max-h-60 overflow-y-auto">
@@ -1056,15 +960,13 @@
           </div>
         </div>
       </div>
-
+      
       <!-- Hidden Columns Banner -->
-      <div v-if="hiddenColumns.length > 0"
-        class="bg-indigo-50 border border-indigo-200 rounded px-3 py-1.5 mb-2 flex justify-between items-center shrink-0">
+      <div v-if="hiddenColumns.length > 0" class="bg-indigo-50 border border-indigo-200 rounded px-3 py-1.5 mb-2 flex justify-between items-center shrink-0">
         <span class="text-xs text-indigo-800">
           <strong>{{ hiddenColumns.length }}</strong> column(s) are hidden.
         </span>
-        <button @click="hiddenColumns = []" class="text-xs font-bold text-indigo-600 hover:underline">Show All
-          Columns</button>
+        <button @click="hiddenColumns = []" class="text-xs font-bold text-indigo-600 hover:underline">Show All Columns</button>
       </div>
 
       <!-- Report Table -->
@@ -1095,50 +997,42 @@
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
             <th @click="toggleSort('progress', $event)"
-              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 w-[100px] min-w-[50px] cursor-pointer hover:bg-gray-200 transition-colors"
-              v-show="!hiddenColumns.includes('progress')">
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 w-[100px] min-w-[50px] cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('progress')">
               <div class="flex items-center justify-center gap-1">Progress (%) <span v-if="sort.key === 'progress'"
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
             <th @click="toggleSort('area_finish', $event)"
-              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 w-[100px] min-w-[50px] cursor-pointer hover:bg-gray-200 transition-colors"
-              v-show="!hiddenColumns.includes('area_finish')">
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 w-[100px] min-w-[50px] cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('area_finish')">
               <div class="flex items-center justify-center gap-1">Area Finish <span v-if="sort.key === 'area_finish'"
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
             <th @click="toggleSort('area_remaining', $event)"
-              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors"
-              v-show="!hiddenColumns.includes('area_remaining')">
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('area_remaining')">
               <div class="flex items-center justify-center gap-1">Area Rem. <span v-if="sort.key === 'area_remaining'"
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
             <th @click="toggleSort('start_date', $event)"
-              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors"
-              v-show="!hiddenColumns.includes('start_date')">
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('start_date')">
               <div class="flex items-center justify-center gap-1">Start Date <span v-if="sort.key === 'start_date'"
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
             <th @click="toggleSort('finish_date', $event)"
-              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors"
-              v-show="!hiddenColumns.includes('finish_date')">
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('finish_date')">
               <div class="flex items-center justify-center gap-1">Finish Date <span v-if="sort.key === 'finish_date'"
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
             <th @click="toggleSort('material', $event)"
-              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 w-[100px] min-w-[50px] cursor-pointer hover:bg-gray-200 transition-colors"
-              v-show="!hiddenColumns.includes('material')">
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 w-[100px] min-w-[50px] cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('material')">
               <div class="flex items-center justify-center gap-1">Material <span v-if="sort.key === 'material'"
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
             <th @click="toggleSort('supplier', $event)"
-              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors"
-              v-show="!hiddenColumns.includes('supplier')">
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('supplier')">
               <div class="flex items-center justify-center gap-1">Supplier <span v-if="sort.key === 'supplier'"
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
             <th @click="toggleSort('as_built', $event)"
-              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors"
-              v-show="!hiddenColumns.includes('as_built')">
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('as_built')">
               <div class="flex items-center justify-center gap-1">AS-BUILT <span v-if="sort.key === 'as_built'"
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
@@ -1148,14 +1042,12 @@
               PUNCH LIST
             </th>
             <th @click="toggleSort('remark', $event)"
-              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors"
-              v-show="!hiddenColumns.includes('remark')">
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('remark')">
               <div class="flex items-center justify-center gap-1">Remark <span v-if="sort.key === 'remark'"
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
             <th @click="toggleSort('updated_date', $event)"
-              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors"
-              v-show="!hiddenColumns.includes('updated_date')">
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('updated_date')">
               <div class="flex items-center justify-center gap-1">Updated <span v-if="sort.key === 'updated_date'"
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
@@ -1184,18 +1076,12 @@
                 <td class="px-2 py-2 font-bold text-indigo-700 text-right">{{ group.avgProgress }}%</td>
                 <td class="px-2 py-2 text-gray-600 text-right">{{ group.sumAreaFinish }}</td>
                 <td class="px-2 py-2 text-gray-600">{{ group.sumAreaRemaining }}</td>
-                <td class="px-2 py-2 text-gray-700 font-medium text-[10px]"
-                  v-show="!hiddenColumns.includes('start_date')">{{ fmtDate(group.minStartDate) }}</td>
-                <!-- Start Date -->
-                <td class="px-2 py-2 text-gray-700 font-medium text-[10px]"
-                  v-show="!hiddenColumns.includes('finish_date')">{{ fmtDate(group.maxFinishDate) }}</td>
-                <!-- Finish Date -->
+                <td class="px-2 py-2 text-gray-700 font-medium text-[10px]" v-show="!hiddenColumns.includes('start_date')">{{ fmtDate(group.minStartDate) }}</td> <!-- Start Date -->
+                <td class="px-2 py-2 text-gray-700 font-medium text-[10px]" v-show="!hiddenColumns.includes('finish_date')">{{ fmtDate(group.maxFinishDate) }}</td> <!-- Finish Date -->
                 <td class="px-2 py-2 text-gray-600" v-show="!hiddenColumns.includes('material')"></td> <!-- Material -->
                 <td class="px-2 py-2 text-gray-600" v-show="!hiddenColumns.includes('supplier')"></td> <!-- Supplier -->
                 <td class="px-2 py-2 text-gray-600" v-show="!hiddenColumns.includes('as_built')"> <!-- AS-BUILT -->
-                  <select v-model="group.as_built" @change="saveGroupLocation(group)" @click.stop
-                    class="bg-transparent font-bold text-blue-700 outline-none w-[90px] cursor-pointer"
-                    :disabled="!isEditor || !!historyDate">
+                  <select v-model="group.as_built" @change="saveGroupLocation(group)" @click.stop class="bg-transparent font-bold text-blue-700 outline-none w-[90px] cursor-pointer" :disabled="!isEditor || !!historyDate">
                     <option value="Approved">Approved</option>
                     <option value="Pending">Pending</option>
                     <option value="On Process">On Process</option>
@@ -1206,8 +1092,7 @@
                     <option value="0%">0%</option>
                   </select>
                 </td>
-                <td class="px-2 py-2 text-center bg-orange-50/30" v-show="!hiddenColumns.includes('ncr')">
-                  <!-- PUNCH LIST Zone Summary -->
+                <td class="px-2 py-2 text-center bg-orange-50/30" v-show="!hiddenColumns.includes('ncr')"> <!-- PUNCH LIST Zone Summary -->
                   <span v-if="ncrByGroupKey(group.key).total > 0"
                     :class="ncrByGroupKey(group.key).done === ncrByGroupKey(group.key).total ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-orange-700 bg-orange-50 border-orange-200'"
                     class="font-bold px-1.5 py-0.5 rounded text-[10px] border">
@@ -1215,9 +1100,7 @@
                   </span>
                   <span v-else class="text-gray-300 text-[10px]">—</span>
                 </td>
-                <td class="px-2 py-2 text-gray-400 italic"
-                  :colspan="1 + (hiddenColumns.includes('remark') ? 0 : 1) + (hiddenColumns.includes('updated_date') ? 0 : 1)">
-                  — Summary —</td>
+                <td class="px-2 py-2 text-gray-400 italic" :colspan="1 + (hiddenColumns.includes('remark') ? 0 : 1) + (hiddenColumns.includes('updated_date') ? 0 : 1)">— Summary —</td>
               </tr>
               <!-- Expanded Job Rows -->
               <template v-if="expandedGroups[group.key]">
@@ -1242,45 +1125,38 @@
                     <div class="relative flex items-center justify-end w-full h-full min-h-[24px]">
                       <input type="text" v-model="task.progress" @input="markUpdated(task)" :disabled="!!historyDate"
                         class="peer table-input text-right font-bold w-full h-full bg-transparent text-transparent focus:text-blue-700 focus:bg-white z-10">
-                      <span
-                        class="absolute inset-y-0 right-1 flex items-center pointer-events-none font-bold text-blue-700 peer-focus:opacity-0 z-0">
+                      <span class="absolute inset-y-0 right-1 flex items-center pointer-events-none font-bold text-blue-700 peer-focus:opacity-0 z-0">
                         {{ task.progress ? task.progress + '%' : '' }}
                       </span>
                     </div>
                   </td>
-                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('area_finish')"><input type="text"
-                      v-model="task.area_finish" @input="markUpdated(task)" :disabled="!!historyDate"
-                      class="table-input text-right"></td>
-                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('area_remaining')"><input type="text"
-                      v-model="task.area_remaining" :title="task.area_remaining" @input="markUpdated(task)"
-                      :disabled="!!historyDate" class="table-input"></td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('area_finish')"><input type="text" v-model="task.area_finish" @input="markUpdated(task)"
+                      :disabled="!!historyDate" class="table-input text-right"></td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('area_remaining')"><input type="text" v-model="task.area_remaining" :title="task.area_remaining"
+                      @input="markUpdated(task)" :disabled="!!historyDate" class="table-input"></td>
                   <td class="px-1 py-1" v-show="!hiddenColumns.includes('start_date')">
-                    <input type="date" v-model="task.start_date" @input="markUpdated(task)" :disabled="!!historyDate"
-                      class="table-input" :title="fmtDate(task.start_date)">
+                    <input type="date" v-model="task.start_date" @input="markUpdated(task)"
+                      :disabled="!!historyDate" class="table-input" :title="fmtDate(task.start_date)">
                   </td>
                   <td class="px-1 py-1" v-show="!hiddenColumns.includes('finish_date')">
-                    <input type="date" v-model="task.finish_date" @input="markUpdated(task)" :disabled="!!historyDate"
-                      class="table-input" :title="fmtDate(task.finish_date)">
+                    <input type="date" v-model="task.finish_date" @input="markUpdated(task)"
+                      :disabled="!!historyDate" class="table-input" :title="fmtDate(task.finish_date)">
                   </td>
                   <td class="px-1 py-1" v-show="!hiddenColumns.includes('material')">
                     <div class="relative flex items-center justify-end w-full h-full min-h-[24px]">
                       <input type="text" v-model="task.material" @input="markUpdated(task)" :disabled="!!historyDate"
                         class="peer table-input text-right w-full h-full bg-transparent text-transparent focus:text-gray-700 focus:bg-white z-10">
-                      <span
-                        class="absolute inset-y-0 right-1 flex items-center pointer-events-none text-gray-700 peer-focus:opacity-0 z-0">
+                      <span class="absolute inset-y-0 right-1 flex items-center pointer-events-none text-gray-700 peer-focus:opacity-0 z-0">
                         {{ task.material ? task.material + '%' : '' }}
                       </span>
                     </div>
                   </td>
                   <td class="px-2 py-1.5 supplier-cell" v-show="!hiddenColumns.includes('supplier')">
                     <span v-if="isEditor">{{ task.supplier }}</span>
-                    <span v-else class="text-gray-300 italic text-[10px]"
-                      title="Sign in as Editor to view">hidden</span>
+                    <span v-else class="text-gray-300 italic text-[10px]" title="Sign in as Editor to view">hidden</span>
                   </td>
-                  <td class="px-2 py-1.5" v-show="!hiddenColumns.includes('as_built')"></td>
-                  <!-- AS-BUILT (task row empty, shows on zone row) -->
-                  <td class="px-2 py-1 text-center bg-orange-50/20" v-show="!hiddenColumns.includes('ncr')">
-                    <!-- PUNCH LIST -->
+                  <td class="px-2 py-1.5" v-show="!hiddenColumns.includes('as_built')"></td> <!-- AS-BUILT (task row empty, shows on zone row) -->
+                  <td class="px-2 py-1 text-center bg-orange-50/20" v-show="!hiddenColumns.includes('ncr')"> <!-- PUNCH LIST -->
                     <span v-if="ncrByTaskIdReport(task.id).total > 0"
                       :class="ncrByTaskIdReport(task.id).done === ncrByTaskIdReport(task.id).total ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-orange-700 bg-orange-50 border-orange-200'"
                       class="font-bold px-1.5 py-0.5 rounded text-[10px] border">
@@ -1288,9 +1164,8 @@
                     </span>
                     <span v-else class="text-gray-300 text-[10px]">—</span>
                   </td>
-                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('remark')"><input type="text"
-                      v-model="task.remark" :title="task.remark" @input="markUpdated(task)" :disabled="!!historyDate"
-                      class="table-input"></td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('remark')"><input type="text" v-model="task.remark" :title="task.remark"
+                      @input="markUpdated(task)" :disabled="!!historyDate" class="table-input"></td>
                   <td class="px-1 py-1" v-show="!hiddenColumns.includes('updated_date')">
                     <input type="date" v-model="task.updated_date" :disabled="!!historyDate"
                       class="table-input bg-amber-50/50 font-bold text-indigo-700" :title="fmtDate(task.updated_date)">
@@ -1319,7 +1194,7 @@
   </div>
 
   <script>
-    const API_URL = 'https://github.com/Admins-doodeco/construction-progress-doodeco';
+    const API_URL = 'http://localhost:3001/api';
     const API_KEY = 'CP-SKETCHUP-SECRET-KEY-2024';
 
     // ── Firebase Configuration ─────────────────────────────────────────────
@@ -1622,7 +1497,7 @@
               start_date: defectForm.value.start_date || null,
               finish_date: defectForm.value.finish_date || null,
               remark: defectForm.value.remark || null,
-              job_type_label: defectForm.value.task_id ? (locationTasks.value.find(t => t.id === defectForm.value.task_id) || {}).job_type || '' : ''
+              job_type_label: defectForm.value.task_id ? (locationTasks.value.find(t=>t.id===defectForm.value.task_id)||{}).job_type || '' : ''
             };
             const res = await fetch(`${API_URL}/defects`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             if (res.ok) {
@@ -1778,7 +1653,7 @@
         const filters = ref({ floor: [], zone: [], job_type: [], supplier: [], progress: [] });
         const sort = ref({ key: 'floor', order: 'asc' });
         const dropdowns = ref({ floor: false, zone: false, job_type: false, supplier: false, progress: false });
-
+        
         const hiddenColumns = ref([]);
         const showColDropdown = ref(false);
         const toggleColumn = (col) => {
@@ -1964,21 +1839,21 @@
         const downloadCsv = () => {
           // All possible columns in display order
           const allColumns = [
-            { key: 'floor', label: 'Floor', always: true },
-            { key: 'zone', label: 'Zone', always: true },
-            { key: 'job_type', label: 'Job Type', always: true },
-            { key: 'model', label: 'Mapped', always: true },
-            { key: 'progress', label: 'Progress (%)', always: false },
-            { key: 'area_finish', label: 'Area Finish', always: false },
+            { key: 'floor',          label: 'Floor',          always: true },
+            { key: 'zone',           label: 'Zone',           always: true },
+            { key: 'job_type',       label: 'Job Type',       always: true },
+            { key: 'model',          label: 'Mapped',         always: true },
+            { key: 'progress',       label: 'Progress (%)',   always: false },
+            { key: 'area_finish',    label: 'Area Finish',    always: false },
             { key: 'area_remaining', label: 'Area Remaining', always: false },
-            { key: 'start_date', label: 'Start Date', always: false },
-            { key: 'finish_date', label: 'Finish Date', always: false },
-            { key: 'material', label: 'Material', always: false },
-            { key: 'supplier', label: 'Supplier', always: false },
-            { key: 'as_built', label: 'AS-BUILT', always: false },
-            { key: 'ncr', label: 'PUNCH LIST', always: false },
-            { key: 'remark', label: 'Remark', always: false },
-            { key: 'updated_date', label: 'Updated Date', always: false },
+            { key: 'start_date',     label: 'Start Date',     always: false },
+            { key: 'finish_date',    label: 'Finish Date',    always: false },
+            { key: 'material',       label: 'Material',       always: false },
+            { key: 'supplier',       label: 'Supplier',       always: false },
+            { key: 'as_built',       label: 'AS-BUILT',       always: false },
+            { key: 'ncr',            label: 'PUNCH LIST',     always: false },
+            { key: 'remark',         label: 'Remark',         always: false },
+            { key: 'updated_date',   label: 'Updated Date',   always: false },
           ];
 
           // Only keep columns that are visible (not hidden)
@@ -1997,22 +1872,22 @@
 
             return visibleColumns.map(col => {
               switch (col.key) {
-                case 'floor': return `"${t.location.floor}"`;
-                case 'zone': return `"${t.location.zone_room}"`;
-                case 'job_type': return `"${t.job_type}"`;
-                case 'model': return isMapped ? '"Yes"' : '"No"';
-                case 'progress': return `"${t.progress || ''}"`;
-                case 'area_finish': return `"${t.area_finish || ''}"`;
+                case 'floor':          return `"${t.location.floor}"`;
+                case 'zone':           return `"${t.location.zone_room}"`;
+                case 'job_type':       return `"${t.job_type}"`;
+                case 'model':          return isMapped ? '"Yes"' : '"No"';
+                case 'progress':       return `"${t.progress || ''}"`;
+                case 'area_finish':    return `"${t.area_finish || ''}"`;
                 case 'area_remaining': return `"${t.area_remaining || ''}"`;
-                case 'start_date': return `"${t.start_date || ''}"`;
-                case 'finish_date': return `"${t.finish_date || ''}"`;
-                case 'material': return `"${t.material || ''}"`;
-                case 'supplier': return isEditor.value ? `"${t.supplier || ''}"` : '"hidden"';
-                case 'as_built': return `"${t.location ? (t.location.as_built || '') : ''}"`;
-                case 'ncr': return ncr.total > 0 ? `"${ncr.done}/${ncr.total}"` : '"—"';
-                case 'remark': return `"${(t.remark || '').replace(/"/g, '""')}"`;
-                case 'updated_date': return `"${t.updated_date || ''}"`;
-                default: return '""';
+                case 'start_date':     return `"${t.start_date || ''}"`;
+                case 'finish_date':    return `"${t.finish_date || ''}"`;
+                case 'material':       return `"${t.material || ''}"`;
+                case 'supplier':       return isEditor.value ? `"${t.supplier || ''}"` : '"hidden"';
+                case 'as_built':       return `"${t.location ? (t.location.as_built || '') : ''}"`;
+                case 'ncr':            return ncr.total > 0 ? `"${ncr.done}/${ncr.total}"` : '"—"';
+                case 'remark':         return `"${(t.remark || '').replace(/"/g, '""')}"`;
+                case 'updated_date':   return `"${t.updated_date || ''}"`;
+                default:               return '""';
               }
             }).join(',');
           });
