@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ==========================================
+// VDC Location
+// ==========================================
+model Location {
+  id        String   @id @default(uuid())
+  floor     String
+  zone_room String
+  tasks     Task[]
+
+  @@unique([floor, zone_room])
+}
+
+// ==========================================
+// VDC Progress Task
+// ==========================================
+model Task {
+  id              String   @id @default(uuid())
+  job_type        String
+  start_date      String?
+  finish_date     String?
+  progress        String?
+  area_finish     String?
+  area_remaining  String?
+  manpower_plan   String?
+  manpower_actual String?
+  material        String?
+  supplier        String?
+  remark          String?
+  
+  location_id     String
+  location        Location @relation(fields: [location_id], references: [id])
+
+  // Deduplication constraint
+  @@unique([location_id, job_type])
+}

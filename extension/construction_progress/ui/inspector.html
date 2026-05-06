@@ -1,0 +1,2389 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Construction Progress Inspector & Report</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <!-- Firebase Auth SDK (compat for CDN/WebView) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f8fafc;
+      overflow-x: hidden;
+    }
+
+    .btn {
+      @apply px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg shadow hover:shadow-md hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold text-sm active:scale-95;
+    }
+
+    .btn-red {
+      @apply px-3 py-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-200 transition-colors duration-200 text-sm font-semibold border border-red-200 active:scale-95;
+    }
+
+    .input-field {
+      @apply mt-1 block w-full rounded-lg border border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 sm:text-sm px-3 py-2 bg-white text-slate-800 transition-all duration-200;
+    }
+
+    .label {
+      @apply block text-xs font-bold text-slate-500 mb-1 tracking-wider uppercase;
+    }
+
+    .card {
+      @apply bg-white p-5 rounded-xl shadow border border-slate-100;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+
+
+    .table-input {
+      @apply w-full min-w-0 text-xs p-1.5 border border-slate-200 rounded focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 bg-slate-50 hover:bg-white transition-all duration-200 text-slate-800;
+    }
+
+    th {
+      resize: horizontal;
+      overflow: hidden;
+      position: relative;
+    }
+
+    th::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      cursor: col-resize;
+    }
+  </style>
+</head>
+
+<body class="text-gray-800">
+
+  <!-- ==================== LOGIN OVERLAY ==================== -->
+  <div id="auth-overlay"
+    style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#0289A4 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;">
+    <div
+      style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(16px);border-radius:1.25rem;padding:2.5rem;width:320px;box-shadow:0 25px 50px rgba(0,0,0,0.5);">
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div
+          style="width:56px;height:56px;background:linear-gradient(135deg,#0289A4,#0ea5e9);border-radius:1rem;margin:0 auto 0.75rem;display:flex;align-items:center;justify-content:center;">
+          <svg style="width:28px;height:28px;color:white;" fill="none" stroke="white" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+            </path>
+          </svg>
+        </div>
+        <h1 style="color:white;font-size:1.25rem;font-weight:700;margin:0;">BIM Construction</h1>
+        <p style="color:#94a3b8;font-size:0.75rem;margin-top:0.25rem;">Construction Progress Inspector</p>
+      </div>
+      <div id="auth-error"
+        style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:0.5rem;padding:0.625rem 0.75rem;font-size:0.75rem;margin-bottom:1rem;">
+      </div>
+      <div style="margin-bottom:1rem;">
+        <label
+          style="display:block;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.375rem;">Email</label>
+        <input id="auth-email" type="email" placeholder="your@email.com"
+          style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:0.5rem;padding:0.625rem 0.75rem;color:white;font-size:0.875rem;outline:none;"
+          onfocus="this.style.borderColor='#0289A4'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'">
+      </div>
+      <div style="margin-bottom:1.5rem;">
+        <label
+          style="display:block;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.375rem;">Password</label>
+        <input id="auth-password" type="password" placeholder="••••••••"
+          style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:0.5rem;padding:0.625rem 0.75rem;color:white;font-size:0.875rem;outline:none;"
+          onfocus="this.style.borderColor='#0289A4'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'">
+      </div>
+      <button id="auth-login-btn" onclick="doLogin()"
+        style="width:100%;background:linear-gradient(135deg,#0289A4,#0ea5e9);border:none;border-radius:0.625rem;padding:0.75rem;color:white;font-size:0.875rem;font-weight:700;cursor:pointer;transition:opacity 0.2s;">
+        Sign In
+      </button>
+      <p style="color:#64748b;font-size:0.7rem;text-align:center;margin-top:1.25rem;">
+        No account? You can view data without signing in.
+      </p>
+      <button onclick="enterAsViewer()"
+        style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:0.625rem;padding:0.5rem;color:#94a3b8;font-size:0.75rem;font-weight:600;cursor:pointer;margin-top:0.5rem;transition:all 0.2s;"
+        onmouseover="this.style.borderColor='rgba(255,255,255,0.35)'"
+        onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'">
+        Continue as Viewer (Read Only)
+      </button>
+    </div>
+    <p style="color:#334155;font-size:0.65rem;margin-top:1.5rem;">Construction Progress v1.0</p>
+  </div>
+  <div id="app" class="p-3 w-full mx-auto flex flex-col h-screen">
+
+    <!-- Top Header and Tabs -->
+    <div class="flex justify-between items-center mb-3 bg-white p-2 rounded shadow-sm border border-gray-200 shrink-0">
+      <div class="flex space-x-6 px-2">
+        <button v-if="inSketchup" @click="switchTab('inspector')"
+          :class="['text-base font-medium tracking-wide transition-all duration-200 rounded-md px-3 py-1.5', activeTab === 'inspector' ? 'bg-[#0289A4] text-white !font-bold' : 'text-slate-500 hover:bg-[#0289A4]/10 hover:text-[#0289A4]']">
+          Inspector
+        </button>
+        <button @click="switchTab('report')"
+          :class="['text-base font-medium tracking-wide transition-all duration-200 rounded-md px-3 py-1.5', activeTab === 'report' ? 'bg-[#0289A4] text-white !font-bold' : 'text-slate-500 hover:bg-[#0289A4]/10 hover:text-[#0289A4]']">
+          Report
+        </button>
+      </div>
+      <div class="flex gap-2 items-center">
+        <!-- Auth Status Badge -->
+        <div v-if="authUser" class="flex items-center gap-1.5 text-xs mr-1">
+          <span
+            :class="isEditor ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'"
+            class="px-2 py-0.5 rounded-full border font-bold text-[10px] uppercase tracking-wide">
+            {{ isEditor ? '✎ Editor' : '👁 Viewer' }}
+          </span>
+          <span class="text-slate-400 text-[10px] hidden sm:inline">{{ authUser.email }}</span>
+          <button @click="doSignOut" class="text-[10px] text-slate-400 hover:text-red-500 font-bold transition-colors"
+            title="Sign Out">✕</button>
+        </div>
+        <div v-else class="flex items-center gap-1 mr-1">
+          <span
+            class="bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">👁
+            Viewer</span>
+          <button @click="showLoginOverlay" class="text-[10px] text-[#0289A4] hover:underline font-bold">Sign
+            In</button>
+        </div>
+        <button v-if="activeTab === 'report'" @click="downloadExcel"
+          class="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-semibold text-sm transition-colors mr-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          Export Progress
+        </button>
+        <button v-if="activeTab === 'report'" @click="downloadCsv"
+          class="flex items-center gap-1 text-emerald-600 hover:text-emerald-800 font-semibold text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          Export CSV
+        </button>
+        <!-- Unhide All button: always visible as a safety net -->
+        <button v-if="inSketchup" @click="unhideAll"
+          class="flex items-center gap-1 text-amber-600 hover:text-amber-800 font-semibold text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z">
+            </path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+            </path>
+          </svg>
+          Unhide All
+        </button>
+        <button v-if="inSketchup" @click="refreshHeatmap" class="btn flex items-center gap-1" :disabled="loadingHeatmap">
+          <svg v-if="!loadingHeatmap" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01">
+            </path>
+          </svg>
+          <svg v-else class="animate-spin w-4 h-4" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
+          </svg>
+          Apply Heatmap
+        </button>
+      </div>
+    </div>
+
+    <!-- Global Status Toast -->
+    <transition enter-active-class="transition duration-300" enter-from-class="transform -translate-y-4 opacity-0"
+      enter-to-class="transform translate-y-0 opacity-100" leave-active-class="transition duration-200"
+      leave-to-class="transform -translate-y-4 opacity-0">
+      <div v-if="statusMessage"
+        class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-md shadow-lg z-50 text-sm font-semibold flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        {{ statusMessage }}
+      </div>
+    </transition>
+
+    <!-- Custom Alert/Confirm Modal (Fixes CEF freeze on macOS) -->
+    <div v-if="modal.show" class="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-40">
+      <div class="bg-white rounded-lg shadow-xl p-5 max-w-sm w-full mx-4 border border-gray-200">
+        <h3 class="text-lg font-bold text-gray-900 mb-2">{{ modal.title }}</h3>
+        <p class="text-sm text-gray-600 mb-4">{{ modal.message }}</p>
+        <div class="flex justify-end gap-2">
+          <button v-if="modal.type === 'confirm'" @click="modal.onCancel"
+            class="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded transition-colors">Cancel</button>
+          <button @click="modal.onConfirm"
+            class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOADING STATE -->
+    <div v-if="loading" class="flex flex-col items-center justify-center flex-grow">
+      <svg class="animate-spin h-8 w-8 text-blue-500 mb-2" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+        </path>
+      </svg>
+      <span class="text-sm text-gray-500 font-medium">Loading data...</span>
+    </div>
+
+    <!-- ==================== INSPECTOR TAB ==================== -->
+    <div v-else-if="activeTab === 'inspector'" class="flex-grow overflow-y-auto">
+
+      <!-- Empty State -->
+      <div v-if="!selection.type" class="text-center mt-8 bg-white p-6 rounded-lg border border-dashed border-gray-300">
+        <svg class="mx-auto h-10 w-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122">
+          </path>
+        </svg>
+        <h3 class="text-base font-medium text-gray-900">No Model Selected</h3>
+        <p class="text-xs text-gray-500 mt-1">Please select a Group or Component in SketchUp to begin mapping.</p>
+      </div>
+
+      <!-- Assignment View -->
+      <div v-else-if="!selection.mapped" class="card">
+        <div class="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+          <div class="bg-blue-100 text-blue-600 p-1.5 rounded-full">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+              </path>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-base font-bold leading-tight">Assign Item</h2>
+            <p class="text-[10px] text-gray-500 font-medium">Type: {{ selection.type }}</p>
+          </div>
+        </div>
+
+        <!-- Group = Location/Zone Assignment -->
+        <div v-if="selection.type === 'Group'">
+          <div class="mb-3">
+            <label class="label">Search Zone / Area</label>
+            <div class="relative">
+              <input type="text" v-model="searchQuery" class="input-field pl-7" placeholder="Type to filter...">
+              <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2 top-2.5" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="mb-3 border border-gray-200 rounded-md overflow-hidden bg-white">
+            <select v-model="selectedLocationId" class="w-full p-1.5 outline-none text-xs h-40 bg-white" size="6">
+              <option v-for="loc in filteredLocations" :key="loc.id" :value="loc.id"
+                class="p-1.5 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0">
+                {{ loc.zone_room }} ({{ loc.floor }})
+              </option>
+            </select>
+          </div>
+          <div v-if="isEditor">
+            <button class="btn w-full flex justify-center items-center gap-1.5" @click="assignLocation"
+              :disabled="!selectedLocationId">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Assign Zone
+            </button>
+          </div>
+          <div v-else
+            class="text-center text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg py-2 px-3 font-medium">
+            🔒 Sign in as Editor to assign zones
+          </div>
+        </div>
+
+        <!-- Component = Task/Job Type OR Defect Assignment -->
+        <div v-if="selection.type === 'ComponentInstance'">
+
+          <!-- Mode toggle tabs -->
+          <div class="flex gap-2 mb-3">
+            <button @click="assignMode = 'job'"
+              :class="assignMode === 'job' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'"
+              class="flex-1 text-xs font-bold py-1.5 rounded-md transition-all">
+              🔧 Assign as Job
+            </button>
+            <button @click="assignMode = 'defect'; loadDefectsForAssign()"
+              :class="assignMode === 'defect' ? 'bg-red-600 text-white' : 'bg-red-50 text-red-600 hover:bg-red-100'"
+              class="flex-1 text-xs font-bold py-1.5 rounded-md transition-all">
+              🚨 Assign as Defect
+            </button>
+          </div>
+
+          <!-- Assign as Job -->
+          <div v-if="assignMode === 'job'">
+            <div class="mb-3">
+              <label class="label">Search Job Type</label>
+              <div class="text-[10px] bg-blue-50 text-blue-700 p-1.5 rounded border border-blue-100 mb-2 flex gap-1 items-start" v-if="selection.parent_floor">
+                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>Auto-filtered by parent Group's zone.</span>
+              </div>
+              <div class="relative">
+                <input type="text" v-model="searchQuery" class="input-field pl-7" placeholder="Type to filter...">
+                <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </div>
+            </div>
+            <div class="mb-3 border border-gray-200 rounded-md overflow-hidden bg-white">
+              <select v-model="selectedTaskId" class="w-full p-1.5 outline-none text-xs h-40 bg-white" size="6">
+                <option v-for="task in filteredTasks" :key="task.id" :value="task.id" class="p-1.5 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0">
+                  {{ task.job_type }}
+                </option>
+              </select>
+            </div>
+            <div v-if="isEditor">
+              <button class="btn w-full flex justify-center items-center gap-1.5" @click="assignTask" :disabled="!selectedTaskId">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Assign Task
+              </button>
+            </div>
+            <div v-else class="text-center text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg py-2 px-3 font-medium">
+              🔒 Sign in as Editor to assign tasks
+            </div>
+          </div>
+
+          <!-- Assign as Defect -->
+          <div v-if="assignMode === 'defect'">
+            <div v-if="!selection.parent_floor" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3 flex gap-1.5 items-start">
+              <svg class="w-3.5 h-3.5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              <span>Select this component inside a mapped Zone Group to see its defect list.</span>
+            </div>
+            <div v-else>
+              <p class="text-[10px] text-red-600 bg-red-50 border border-red-100 rounded p-1.5 mb-2">
+                Defects in: <strong>{{ selection.parent_zone_room }} — {{ selection.parent_floor }}</strong>
+              </p>
+              <div v-if="assignableDefects.length === 0" class="text-center py-4 text-xs text-gray-400 italic">
+                No unassigned defects in this zone. Add defects from the Zone detail first.
+              </div>
+              <div v-else class="mb-3 border border-red-200 rounded-md overflow-hidden bg-white">
+                <select v-model="selectedDefectId" class="w-full p-1.5 outline-none text-xs h-40 bg-white" size="6">
+                  <option v-for="d in assignableDefects" :key="d.id" :value="d.id" class="p-1.5 hover:bg-red-50 cursor-pointer border-b border-gray-50 last:border-0">
+                    {{ String(d.number).padStart(2,'0') }} — {{ d.name }} ({{ d.classification }})
+                  </option>
+                </select>
+              </div>
+              <div v-if="isEditor && assignableDefects.length > 0">
+                <button class="btn w-full flex justify-center items-center gap-1.5 !bg-gradient-to-r !from-red-500 !to-rose-600 hover:!from-red-600 hover:!to-rose-700" @click="assignDefect" :disabled="!selectedDefectId">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Assign Defect
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail View: Mapped as DEFECT Component -->
+      <div v-else-if="selection.mapped && selection.is_defect && currentDefect" class="space-y-3">
+        <div class="card !p-3">
+          <!-- Header: Job → Zone - Floor -->
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <h2 class="text-base font-bold text-red-700">{{ currentDefect.task ? currentDefect.task.job_type : 'Defect' }}</h2>
+              <p class="text-[10px] text-gray-500 font-bold uppercase tracking-tight">{{ currentDefect.location.zone_room }} — {{ currentDefect.location.floor }}</p>
+            </div>
+            <button v-if="isEditor" @click="unassignDefectItem" class="btn-red">Unassign</button>
+          </div>
+
+          <!-- Defect number code banner -->
+          <div class="bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">
+            <p class="text-[10px] text-red-400 uppercase font-bold tracking-wider mb-0.5">Defect Code</p>
+            <p class="text-sm font-bold text-red-800">{{ currentDefect.number_code }}</p>
+          </div>
+
+          <div class="space-y-3">
+            <!-- Name -->
+            <div>
+              <label class="label text-red-700">Defect Name</label>
+              <input type="text" v-model="currentDefect.name" @input="defectUpdated = true" class="input-field border-red-300 bg-red-50/50">
+            </div>
+
+            <!-- Class + Status -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="label">Classification</label>
+                <select v-model="currentDefect.classification" @change="defectUpdated = true" class="input-field" :disabled="!isEditor">
+                  <option value="Major">🔴 Major</option>
+                  <option value="Minor">🟡 Minor</option>
+                </select>
+              </div>
+              <div>
+                <label class="label">Status</label>
+                <select v-model="currentDefect.status" @change="defectUpdated = true" class="input-field" :disabled="!isEditor">
+                  <option value="Not Start">Not Start</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Done">Done</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Dates -->
+            <div class="grid grid-cols-2 gap-3 p-3 border border-slate-200 rounded-xl bg-slate-50/80">
+              <div><label class="label">Start Date</label><input type="date" v-model="currentDefect.start_date" @input="defectUpdated = true" class="input-field" :disabled="!isEditor"></div>
+              <div><label class="label">Finish Date</label><input type="date" v-model="currentDefect.finish_date" @input="defectUpdated = true" class="input-field" :disabled="!isEditor"></div>
+            </div>
+
+            <!-- Supplier + Remark -->
+            <div class="space-y-2 p-3 border border-slate-200 rounded-xl bg-slate-50/80">
+              <div>
+                <label class="label flex justify-between"><span>Supplier</span><span class="text-slate-400 font-normal lowercase tracking-normal">(read-only)</span></label>
+                <input v-if="isEditor" type="text" v-model="currentDefect.supplier" class="input-field bg-slate-100/70 text-slate-500 cursor-not-allowed" readonly>
+                <div v-else class="input-field bg-slate-100/70 text-slate-300 italic text-xs py-2">hidden (Sign in as Editor to view)</div>
+              </div>
+              <div>
+                <label class="label">Remark</label>
+                <textarea v-model="currentDefect.remark" rows="2" @input="defectUpdated = true" class="input-field resize-none" :disabled="!isEditor"></textarea>
+              </div>
+            </div>
+
+            <!-- Images -->
+            <div class="mt-2 pt-3 border-t border-slate-200">
+              <label class="label flex justify-between">
+                <span>Attachments ({{ currentDefect.images ? currentDefect.images.length : 0 }}/10)</span>
+                <span class="text-[10px] text-slate-400 font-normal normal-case">Max 5MB per file</span>
+              </label>
+              <div v-if="currentDefect.images && currentDefect.images.length > 0" class="flex flex-wrap gap-2 mb-2">
+                <div v-for="img in currentDefect.images" :key="img.id" class="relative group w-16 h-16 border border-slate-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <a :href="img.file_url" target="_blank"><img :src="img.file_url" class="object-cover w-full h-full" :alt="img.file_name" /></a>
+                  <button @click.prevent="deleteDefectImage(img.id)" class="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white rounded-bl-lg p-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+                </div>
+              </div>
+              <input type="file" multiple accept="image/*" @change="uploadDefectImages($event)"
+                :disabled="currentDefect.images && currentDefect.images.length >= 10"
+                class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 cursor-pointer transition-colors mt-2">
+              <div v-if="uploadingDefectImages" class="text-[10px] text-red-600 mt-1.5 flex items-center gap-1 font-medium">
+                <svg class="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                Uploading...
+              </div>
+            </div>
+
+            <!-- Updated Date (History Snapshot) -->
+            <div class="p-3 border border-amber-200 rounded-xl bg-amber-50/60">
+              <label class="label text-amber-700 flex justify-between">
+                <span>Updated Date</span>
+                <span class="text-[10px] text-amber-500 font-normal normal-case">บันทึก history ณ วันที่นี้</span>
+              </label>
+              <input type="date" v-model="currentDefect.updated_date" @input="defectUpdated = true"
+                class="input-field bg-amber-50 border-amber-300 font-bold text-indigo-700" :disabled="!isEditor">
+              <p v-if="currentDefect.histories && currentDefect.histories.length > 0"
+                class="text-[10px] text-amber-600 mt-1.5">
+                📅 {{ currentDefect.histories.length }} snapshot(s) saved
+                — latest: {{ currentDefect.histories.slice().sort((a,b) => b.updated_date.localeCompare(a.updated_date))[0].updated_date }}
+              </p>
+            </div>
+
+            <!-- Save -->
+            <div v-if="isEditor">
+              <button class="btn w-full flex justify-center items-center gap-2 mt-2 py-3 !text-base !font-bold !bg-gradient-to-r !from-red-500 !to-rose-600 hover:!from-red-600 hover:!to-rose-700 shadow-md"
+                @click="saveDefect">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                Save Defect
+              </button>
+            </div>
+            <div v-else class="text-center text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg py-2.5 px-3 font-medium">
+              🔒 Read-only — Sign in as Editor to save changes
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Detail View: Mapped Group (Zone) -->
+
+      <!-- Detail View: Mapped Group (Zone) -->
+      <div v-else-if="selection.mapped && selection.type === 'Group'" class="space-y-3">
+        <div class="card !p-3">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <h2 class="text-base font-bold text-blue-800">{{ selection.cp_zone_room }}</h2>
+              <p class="text-[10px] text-gray-500 font-bold uppercase tracking-tight">{{ selection.cp_floor }}</p>
+            </div>
+            <button @click="unassignItem" class="btn-red">Unassign</button>
+          </div>
+
+          <!-- AS-BUILT field for Zone -->
+          <div v-if="currentLocation" class="mb-4">
+            <label class="label">AS-BUILT</label>
+            <select v-model="currentLocation.as_built" class="input-field mb-2" :disabled="!isEditor">
+              <option value="Approved">Approved</option>
+              <option value="Pending">Pending</option>
+              <option value="On Process">On Process</option>
+              <option value="90%">90%</option>
+              <option value="75%">75%</option>
+              <option value="50%">50%</option>
+              <option value="25%">25%</option>
+              <option value="0%">0%</option>
+            </select>
+            <button v-if="isEditor" class="btn w-full flex justify-center items-center gap-1.5" @click="saveLocation">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              Save AS-BUILT Status
+            </button>
+          </div>
+
+          <!-- Tasks in this Zone -->
+          <div v-if="locationTasks.length > 0">
+            <h3 class="label mb-2">Jobs in this Zone ({{ locationTasks.length }})</h3>
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <table class="w-full text-[11px]">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-2 py-1.5 text-left font-bold text-gray-600 uppercase">Model</th>
+                    <th class="px-2 py-1.5 text-left font-bold text-gray-600 uppercase">Job Type</th>
+                    <th class="px-2 py-1.5 text-left font-bold text-gray-600 uppercase">Progress</th>
+                    <th class="px-2 py-1.5 text-center font-bold text-orange-600 uppercase" title="Major Defects: Done / Total">PUNCH LIST</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <tr v-for="task in locationTasks" :key="task.id" class="hover:bg-blue-50/50 transition-colors">
+                    <td class="px-2 py-1.5 text-center">
+                      <svg
+                        v-if="selection.mapped_task_keys && selection.mapped_task_keys.includes(`${task.location.floor}||${task.location.zone_room}||${task.job_type}`)"
+                        class="w-3.5 h-3.5 text-emerald-500 inline" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clip-rule="evenodd"></path>
+                      </svg>
+                      <span v-else class="text-gray-300">—</span>
+                    </td>
+                    <td class="px-2 py-1.5 font-medium text-gray-800">
+                      <span v-if="task.sketchup_mapped" class="text-[10px] text-blue-600 font-bold underline cursor-pointer hover:text-blue-800 transition-colors"
+                        @click="zoomToJobFromZone(task)">
+                        {{ task.job_type }}
+                      </span>
+                      <span v-else class="text-gray-800">{{ task.job_type }}</span>
+                    </td>
+                    <td class="px-2 py-1.5 font-bold text-blue-700">{{ task.progress || '—' }}</td>
+                    <td class="px-2 py-1.5 text-center">
+                      <span v-if="ncrByTaskId(task.id).total > 0"
+                        :class="ncrByTaskId(task.id).done === ncrByTaskId(task.id).total ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-orange-700 bg-orange-50 border-orange-200'"
+                        class="font-bold px-1.5 py-0.5 rounded text-[10px] border">
+                        {{ ncrByTaskId(task.id).done }}/{{ ncrByTaskId(task.id).total }}
+                      </span>
+                      <span v-else class="text-gray-300">—</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div v-else class="text-center py-4 text-xs text-gray-400 italic">
+            No tasks found for this zone.
+          </div>
+
+
+          <!-- ====== DEFECT LIST SECTION ====== -->
+          <div class="mt-4 pt-3 border-t border-red-100">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="label text-red-700 mb-0">Defect List ({{ locationDefects.length }})</h3>
+              <button v-if="isEditor" @click="showAddDefectForm = !showAddDefectForm"
+                class="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md transition-all"
+                :class="showAddDefectForm ? 'bg-red-100 text-red-700' : 'bg-red-600 text-white hover:bg-red-700'">
+                <span>{{ showAddDefectForm ? '✕ Cancel' : '+ Add Defect' }}</span>
+              </button>
+            </div>
+
+            <!-- Add Defect Form -->
+            <transition enter-active-class="transition duration-200" enter-from-class="opacity-0 -translate-y-1" enter-to-class="opacity-100 translate-y-0">
+              <div v-if="showAddDefectForm && isEditor" class="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl space-y-2">
+                <div>
+                  <label class="label">Defect Name <span class="text-red-500">*</span></label>
+                  <input type="text" v-model="defectForm.name" class="input-field" placeholder="Describe the defect...">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="label">Classification</label>
+                    <select v-model="defectForm.classification" class="input-field">
+                      <option value="Major">🔴 Major</option>
+                      <option value="Minor">🟡 Minor</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="label">Job Type (optional)</label>
+                    <select v-model="defectForm.task_id" class="input-field" @change="onDefectFormTaskChange">
+                      <option value="">— None —</option>
+                      <option v-for="t in locationTasks" :key="t.id" :value="t.id">{{ t.job_type }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="label">Status</label>
+                    <select v-model="defectForm.status" class="input-field">
+                      <option value="Not Start">Not Start</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Done">Done</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="label flex justify-between"><span>Supplier</span><span class="text-slate-400 font-normal lowercase tracking-normal">(auto-fill)</span></label>
+                    <input type="text" v-model="defectForm.supplier" class="input-field" placeholder="Auto from Job Type">
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div><label class="label">Start Date</label><input type="date" v-model="defectForm.start_date" class="input-field"></div>
+                  <div><label class="label">Finish Date</label><input type="date" v-model="defectForm.finish_date" class="input-field"></div>
+                </div>
+                <div>
+                  <label class="label">Remark</label>
+                  <textarea v-model="defectForm.remark" rows="2" class="input-field resize-none" placeholder="Additional details..."></textarea>
+                </div>
+                <button @click="createDefect" :disabled="!defectForm.name.trim()"
+                  class="btn w-full flex justify-center items-center gap-1.5 !bg-gradient-to-r !from-red-500 !to-rose-600 hover:!from-red-600 hover:!to-rose-700">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                  Create Defect
+                </button>
+              </div>
+            </transition>
+
+            <!-- Defect Table -->
+            <div v-if="locationDefects.length > 0" class="border border-red-200 rounded-lg overflow-hidden">
+              <table class="w-full text-[11px]">
+                <thead class="bg-red-50">
+                  <tr>
+                    <th class="px-2 py-1.5 text-center font-bold text-red-700 uppercase w-8">Model</th>
+                    <th @click="toggleDefectSort('classification')" class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
+                      Class <span v-if="defectSort.key==='classification'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼' }}</span>
+                    </th>
+                    <th @click="toggleDefectSort('name')" class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
+                      Name <span v-if="defectSort.key==='name'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼' }}</span>
+                    </th>
+                    <th @click="toggleDefectSort('job')" class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
+                      Job <span v-if="defectSort.key==='job'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼' }}</span>
+                    </th>
+                    <th @click="toggleDefectSort('status')" class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
+                      Status <span v-if="defectSort.key==='status'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼' }}</span>
+                    </th>
+                    <th @click="toggleDefectSort('finish_date')" class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
+                      Finish <span v-if="defectSort.key==='finish_date'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼' }}</span>
+                    </th>
+                    <th @click="toggleDefectSort('supplier')" class="px-2 py-1.5 text-left font-bold text-red-700 uppercase cursor-pointer hover:bg-red-100 transition-colors">
+                      Supplier <span v-if="defectSort.key==='supplier'" class="text-[8px]">{{ defectSort.order==='asc'?'▲':'▼' }}</span>
+                    </th>
+                    <th v-if="isEditor" class="px-2 py-1.5 w-6"></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-red-100">
+                  <tr v-for="defect in sortedLocationDefects" :key="defect.id"
+                    class="hover:bg-red-50/60 transition-colors cursor-pointer"
+                    @click="openDefectDetail(defect)">
+                    <!-- Model column: assigned indicator + click to zoom -->
+                    <td class="px-2 py-1.5 text-center" @click.stop>
+                      <button v-if="defect.sketchup_instance_name"
+                        @click="zoomToDefectItem(defect)"
+                        class="text-emerald-500 hover:text-emerald-700 transition-colors" title="Navigate to model">
+                        <svg class="w-3.5 h-3.5 inline" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                      </button>
+                      <span v-else class="text-gray-300">—</span>
+                    </td>
+                    <td class="px-2 py-1.5">
+                      <span :class="defect.classification === 'Major' ? 'bg-red-100 text-red-700 border-red-300' : 'bg-amber-100 text-amber-700 border-amber-300'"
+                        class="px-1.5 py-0.5 rounded text-[10px] font-bold border">
+                        {{ defect.classification === 'Major' ? '🔴 M' : '🟡 m' }}
+                      </span>
+                    </td>
+                    <!-- Name: hyperlink if assigned to model -->
+                    <td class="px-2 py-1.5 max-w-[100px] truncate" :title="defect.name" @click.stop>
+                      <span class="text-[10px] text-gray-400 mr-1">{{ String(defect.number).padStart(2,'0') }}</span>
+                      <span v-if="defect.sketchup_instance_name"
+                        class="font-semibold text-red-700 underline cursor-pointer hover:text-red-900 decoration-red-300 transition-colors"
+                        @click="zoomToDefectItem(defect)">
+                        {{ defect.name }}
+                      </span>
+                      <span v-else class="font-medium text-gray-800">{{ defect.name }}</span>
+                    </td>
+                    <td class="px-2 py-1.5 text-gray-500 max-w-[80px] truncate" :title="defect.task ? defect.task.job_type : ''">{{ defect.task ? defect.task.job_type : '—' }}</td>
+                    <td class="px-2 py-1.5">
+                      <span :class="{
+                        'bg-gray-100 text-gray-600': defect.status === 'Not Start',
+                        'bg-blue-100 text-blue-700': defect.status === 'In Progress',
+                        'bg-emerald-100 text-emerald-700': defect.status === 'Done'
+                      }" class="px-1.5 py-0.5 rounded text-[10px] font-semibold">{{ defect.status }}</span>
+                    </td>
+                    <td class="px-2 py-1.5 text-gray-500">{{ defect.finish_date || '—' }}</td>
+                    <td class="px-2 py-1.5 text-gray-500 max-w-[80px] truncate" :title="isEditor ? defect.supplier : ''">
+                      <span v-if="isEditor">{{ defect.supplier || '—' }}</span>
+                      <span v-else class="text-gray-300 italic text-[9px]">—</span>
+                    </td>
+                    <td v-if="isEditor" class="px-2 py-1.5 text-center" @click.stop>
+                      <button @click="deleteDefect(defect)" class="text-red-400 hover:text-red-600 transition-colors font-bold text-sm leading-none">×</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-else-if="!showAddDefectForm" class="text-center py-3 text-xs text-red-300 italic">
+              No defects recorded for this zone.
+            </div>
+          </div>
+          <!-- ====== END DEFECT LIST ====== -->
+
+        </div>
+      </div>
+
+      <!-- Detail View: Mapped Component (Task) -->
+      <div v-else-if="selection.mapped && currentTask" class="space-y-3">
+        <div class="card !p-3">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <h2 class="text-base font-bold text-blue-800">{{ selection.cp_job_type }}</h2>
+              <p class="text-[10px] text-gray-500 font-bold uppercase tracking-tight">{{ selection.cp_zone_room }} - {{
+                selection.cp_floor }}</p>
+            </div>
+            <div class="flex gap-2">
+              <button @click="redrawModel"
+                class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 hover:text-indigo-700 focus:outline-none transition-colors duration-200 text-sm font-semibold border border-indigo-200 active:scale-95">Redraw</button>
+              <button v-if="isEditor" @click="unassignItem" class="btn-red">Unassign</button>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="label text-indigo-700">Progress (%)</label>
+              <input type="text" v-model="currentTask.progress" @input="markUpdated(currentTask)"
+                class="input-field border-indigo-300 bg-indigo-50/60 text-lg font-bold text-indigo-800 shadow-sm">
+            </div>
+
+            <div class="p-3 border border-slate-200 rounded-xl bg-slate-50/80 grid grid-cols-2 gap-3 shadow-sm">
+              <div><label class="label">Start Date</label><input type="date" v-model="currentTask.start_date"
+                  class="input-field" @input="markUpdated(currentTask)"></div>
+              <div><label class="label">Finish Date</label><input type="date" v-model="currentTask.finish_date"
+                  class="input-field" @input="markUpdated(currentTask)"></div>
+            </div>
+
+            <div class="p-3 border border-slate-200 rounded-xl bg-slate-50/80 grid grid-cols-2 gap-3 shadow-sm">
+              <div><label class="label">Area Finish</label><input type="text" v-model="currentTask.area_finish"
+                  class="input-field" @input="markUpdated(currentTask)"></div>
+              <div><label class="label">Area Remaining</label><input type="text" v-model="currentTask.area_remaining"
+                  class="input-field" @input="markUpdated(currentTask)"></div>
+            </div>
+
+            <div class="p-3 border border-slate-200 rounded-xl bg-slate-50/80 grid grid-cols-2 gap-3 shadow-sm">
+              <div><label class="label">Manpower Plan</label><input type="text" v-model="currentTask.manpower_plan"
+                  class="input-field" @input="markUpdated(currentTask)"></div>
+              <div><label class="label">Manpower Actual</label><input type="text" v-model="currentTask.manpower_actual"
+                  class="input-field" @input="markUpdated(currentTask)"></div>
+            </div>
+
+            <div class="space-y-3 p-3 border border-slate-200 rounded-xl bg-slate-50/80 shadow-sm">
+              <div><label class="label">Material</label><input type="text" v-model="currentTask.material"
+                  class="input-field" @input="markUpdated(currentTask)"></div>
+              <div><label class="label flex justify-between"><span>Supplier</span> <span
+                    class="text-slate-400 font-normal lowercase tracking-normal">(read-only)</span></label>
+                <input v-if="isEditor" type="text" v-model="currentTask.supplier"
+                  class="input-field bg-slate-100/70 text-slate-500 cursor-not-allowed" readonly>
+                <div v-else class="input-field bg-slate-100/70 text-slate-300 italic text-xs py-2">hidden (Sign in as Editor to view)</div>
+              </div>
+              <div><label class="label">Remark</label><textarea v-model="currentTask.remark" rows="2"
+                  class="input-field resize-none" @input="markUpdated(currentTask)"></textarea></div>
+              <div><label class="label text-amber-600">Updated Date</label><input type="date"
+                  v-model="currentTask.updated_date"
+                  class="input-field bg-amber-50/70 font-semibold text-amber-800 border-amber-200"></div>
+            </div>
+
+            <!-- Image Attachments Section -->
+            <div class="mt-4 pt-3 border-t border-slate-200">
+              <label class="label flex justify-between">
+                <span>Attachments ({{ currentTask.images ? currentTask.images.length : 0 }}/10)</span>
+                <span class="text-[10px] text-slate-400 font-normal normal-case">Max 5MB per file</span>
+              </label>
+
+              <div v-if="currentTask.images && currentTask.images.length > 0" class="flex flex-wrap gap-2 mb-2">
+                <div v-for="img in currentTask.images" :key="img.id"
+                  class="relative group w-16 h-16 border border-slate-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <a :href="img.file_url" target="_blank">
+                    <img :src="img.file_url" class="object-cover w-full h-full" :alt="img.file_name" />
+                  </a>
+                  <button @click.prevent="deleteImage(currentTask, img.id)"
+                    class="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white rounded-bl-lg p-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                      </path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <input type="file" multiple accept="image/*" @change="uploadImages($event, currentTask)"
+                :disabled="currentTask.images && currentTask.images.length >= 10 || !!historyDate"
+                class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer transition-colors mt-2">
+              <div v-if="uploadingImages"
+                class="text-[10px] text-indigo-600 mt-1.5 flex items-center gap-1 font-medium">
+                <svg class="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+                Uploading...
+              </div>
+            </div>
+
+            <div v-if="isEditor">
+              <button
+                class="btn w-full flex justify-center items-center gap-2 mt-4 py-3 !text-base !font-bold !bg-gradient-to-r !from-emerald-500 !to-teal-600 hover:!from-emerald-600 hover:!to-teal-700 shadow-md hover:shadow-lg transition-all"
+                @click="saveTask(currentTask)">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                    d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                  </path>
+                </svg>
+                Save Data
+              </button>
+            </div>
+            <div v-else
+              class="mt-4 text-center text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg py-2.5 px-3 font-medium">
+              🔒 Read-only — Sign in as Editor to save changes
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== REPORT TAB ==================== -->
+    <div v-else-if="activeTab === 'report'" class="flex flex-col h-full overflow-hidden">
+      <!-- Filter Bar -->
+      <div class="card !p-2 mb-2 flex flex-wrap gap-2 items-center bg-gray-50 shrink-0">
+        <div class="flex items-center gap-1">
+          <label class="text-[10px] font-bold text-gray-500 uppercase">History:</label>
+          <input type="date" v-model="historyDate" @change="fetchHistory"
+            class="text-xs p-1 border border-gray-300 rounded focus:border-blue-500 outline-none">
+          <button v-if="historyDate" @click="clearHistory"
+            class="text-[10px] text-red-500 font-bold px-1 hover:underline">Clear</button>
+        </div>
+
+        <div class="h-4 w-px bg-gray-300 mx-1"></div>
+
+        <!-- Filter Dropdowns -->
+        <template
+          v-for="(options, key) in { floor: uniqueFloors, zone: uniqueZones, job_type: uniqueJobTypes, supplier: uniqueSuppliers, progress: uniqueProgresses }">
+          <div class="relative group">
+            <button @click="dropdowns[key] = !dropdowns[key]"
+              class="flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 rounded text-[10px] hover:bg-gray-50 transition-colors">
+              <span class="font-bold text-gray-600 uppercase">{{ key }}:</span>
+              <span :class="filters[key].length ? 'text-blue-600 font-bold' : 'text-gray-400'">
+                {{ filters[key].length === 0 ? 'All' : (filters[key].length === 1 ? filters[key][0] :
+                filters[key].length + ' selected') }}
+              </span>
+              <svg class="w-2.5 h-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </button>
+            <div v-if="dropdowns[key]"
+              class="absolute left-0 mt-1 w-40 bg-white border border-gray-200 rounded shadow-xl z-[60] max-h-60 overflow-y-auto">
+              <div @mousedown.prevent="setFilter(key, '')"
+                class="px-3 py-1.5 hover:bg-blue-50 cursor-pointer text-[10px] border-b border-gray-100 font-bold text-gray-400 flex items-center justify-between">
+                <span>ALL</span>
+                <span v-if="filters[key].length === 0" class="text-blue-500 font-bold">✓</span>
+              </div>
+              <div v-for="opt in options" @mousedown.prevent="setFilter(key, opt)"
+                class="px-3 py-1.5 hover:bg-blue-50 cursor-pointer text-[10px] border-b border-gray-50 last:border-0 flex items-center justify-between"
+                :class="{ 'bg-blue-50 text-blue-600 font-bold': filters[key].includes(opt) }">
+                <span>{{ opt }}</span>
+                <span v-if="filters[key].includes(opt)" class="text-blue-500 font-bold">✓</span>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <button @click="resetFilters"
+          class="text-[10px] text-gray-500 font-bold hover:text-blue-600 transition-colors px-1">Reset All</button>
+
+        <div class="h-4 w-px bg-gray-300 mx-1"></div>
+
+        <!-- Expand / Collapse All -->
+        <button @click="expandAll"
+          class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 px-1 transition-colors">▼ Expand
+          All</button>
+        <button @click="collapseAll"
+          class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 px-1 transition-colors">▲ Collapse
+          All</button>
+          
+        <div class="h-4 w-px bg-gray-300 mx-1"></div>
+
+        <!-- Columns Dropdown -->
+        <div class="relative group">
+          <button @click="showColDropdown = !showColDropdown"
+            class="flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 rounded text-[10px] hover:bg-gray-50 transition-colors">
+            <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
+            <span class="font-bold text-gray-600">Columns</span>
+            <span v-if="hiddenColumns.length" class="bg-indigo-100 text-indigo-700 px-1 rounded">{{ hiddenColumns.length }} hidden</span>
+          </button>
+          <div v-if="showColDropdown"
+            class="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded shadow-xl z-[60] max-h-60 overflow-y-auto">
+            <div @mousedown.prevent="hiddenColumns = []"
+              class="px-3 py-1.5 hover:bg-indigo-50 cursor-pointer text-[10px] border-b border-gray-100 font-bold text-indigo-600 flex items-center justify-between">
+              <span>Show All Columns</span>
+            </div>
+            <div v-for="col in hidableColumnsList" :key="col.key" @mousedown.prevent="toggleColumn(col.key)"
+              class="px-3 py-1.5 hover:bg-gray-50 cursor-pointer text-[10px] border-b border-gray-50 last:border-0 flex items-center gap-2">
+              <input type="checkbox" :checked="!hiddenColumns.includes(col.key)" class="pointer-events-none" />
+              <span :class="{'text-gray-400 line-through': hiddenColumns.includes(col.key)}">{{ col.label }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Hidden Columns Banner -->
+      <div v-if="hiddenColumns.length > 0" class="bg-indigo-50 border border-indigo-200 rounded px-3 py-1.5 mb-2 flex justify-between items-center shrink-0">
+        <span class="text-xs text-indigo-800">
+          <strong>{{ hiddenColumns.length }}</strong> column(s) are hidden.
+        </span>
+        <button @click="hiddenColumns = []" class="text-xs font-bold text-indigo-600 hover:underline">Show All Columns</button>
+      </div>
+
+      <!-- Report Table -->
+      <div class="flex-grow overflow-auto border border-gray-200 rounded bg-white shadow-inner relative">
+        <table class="min-w-full w-max text-[11px] border-collapse">
+          <thead class="bg-gray-100 sticky top-0 z-10 shadow-sm">
+            <th
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 w-6">
+            </th>
+            <th @click="toggleSort('model', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 w-10 cursor-pointer hover:bg-gray-200 transition-colors">
+              <div class="flex items-center justify-center gap-1">Model <span v-if="sort.key === 'model'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th @click="toggleSort('floor', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors">
+              <div class="flex items-center justify-center gap-1">Floor <span v-if="sort.key === 'floor'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th @click="toggleSort('zone', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors">
+              <div class="flex items-center justify-center gap-1">Zone <span v-if="sort.key === 'zone'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th @click="toggleSort('job_type', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors">
+              <div class="flex items-center justify-center gap-1">Job Type <span v-if="sort.key === 'job_type'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th @click="toggleSort('progress', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 w-[100px] min-w-[50px] cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('progress')">
+              <div class="flex items-center justify-center gap-1">Progress (%) <span v-if="sort.key === 'progress'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th @click="toggleSort('area_finish', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 w-[100px] min-w-[50px] cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('area_finish')">
+              <div class="flex items-center justify-center gap-1">Area Finish <span v-if="sort.key === 'area_finish'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th @click="toggleSort('area_remaining', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('area_remaining')">
+              <div class="flex items-center justify-center gap-1">Area Rem. <span v-if="sort.key === 'area_remaining'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th @click="toggleSort('start_date', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('start_date')">
+              <div class="flex items-center justify-center gap-1">Start Date <span v-if="sort.key === 'start_date'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th @click="toggleSort('finish_date', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('finish_date')">
+              <div class="flex items-center justify-center gap-1">Finish Date <span v-if="sort.key === 'finish_date'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th @click="toggleSort('material', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 w-[100px] min-w-[50px] cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('material')">
+              <div class="flex items-center justify-center gap-1">Material <span v-if="sort.key === 'material'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th @click="toggleSort('supplier', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('supplier')">
+              <div class="flex items-center justify-center gap-1">Supplier <span v-if="sort.key === 'supplier'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th @click="toggleSort('as_built', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('as_built')">
+              <div class="flex items-center justify-center gap-1">AS-BUILT <span v-if="sort.key === 'as_built'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th
+              class="px-2 py-2 text-center font-bold text-orange-600 uppercase tracking-tighter border-b border-orange-200 bg-orange-50/50"
+              title="PUNCH LIST: Major Defect Done / Total" v-show="!hiddenColumns.includes('ncr')">
+              PUNCH LIST
+            </th>
+            <th @click="toggleSort('remark', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('remark')">
+              <div class="flex items-center justify-center gap-1">Remark <span v-if="sort.key === 'remark'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th @click="toggleSort('updated_date', $event)"
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('updated_date')">
+              <div class="flex items-center justify-center gap-1">Updated <span v-if="sort.key === 'updated_date'"
+                  class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
+            </th>
+            <th
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200">
+              Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <template v-for="group in groupedReportTasks" :key="group.key">
+              <!-- Group Header Row (Zone) -->
+              <tr
+                class="bg-indigo-50/80 hover:bg-indigo-100/80 cursor-pointer transition-colors border-b border-indigo-200"
+                @click="toggleGroup(group.key); zoomToZone(group)">
+                <td class="px-2 py-2 text-center">
+                  <span class="text-[10px] text-indigo-500 font-bold">{{ expandedGroups[group.key] ? '▼' : '▶' }}</span>
+                </td>
+                <td class="px-2 py-2 text-center">
+                  <span class="text-[10px]"
+                    :class="group.mappedCount === group.tasks.length ? 'text-emerald-500' : group.mappedCount > 0 ? 'text-amber-500' : 'text-gray-300'">{{
+                    group.mappedCount }}/{{ group.tasks.length }}</span>
+                </td>
+                <td class="px-2 py-2 font-bold text-indigo-800">{{ group.floor }}</td>
+                <td class="px-2 py-2 font-bold text-indigo-700">{{ group.zone }}</td>
+                <td class="px-2 py-2 text-[10px] text-gray-500 italic">{{ group.tasks.length }} job(s)</td>
+                <td class="px-2 py-2 font-bold text-indigo-700 text-right">{{ group.avgProgress }}%</td>
+                <td class="px-2 py-2 text-gray-600 text-right">{{ group.sumAreaFinish }}</td>
+                <td class="px-2 py-2 text-gray-600">{{ group.sumAreaRemaining }}</td>
+                <td class="px-2 py-2 text-gray-700 font-medium text-[10px]" v-show="!hiddenColumns.includes('start_date')">{{ fmtDate(group.minStartDate) }}</td> <!-- Start Date -->
+                <td class="px-2 py-2 text-gray-700 font-medium text-[10px]" v-show="!hiddenColumns.includes('finish_date')">{{ fmtDate(group.maxFinishDate) }}</td> <!-- Finish Date -->
+                <td class="px-2 py-2 text-gray-600" v-show="!hiddenColumns.includes('material')"></td> <!-- Material -->
+                <td class="px-2 py-2 text-gray-600" v-show="!hiddenColumns.includes('supplier')"></td> <!-- Supplier -->
+                <td class="px-2 py-2 text-gray-600" v-show="!hiddenColumns.includes('as_built')"> <!-- AS-BUILT -->
+                  <select v-model="group.as_built" @change="saveGroupLocation(group)" @click.stop class="bg-transparent font-bold text-blue-700 outline-none w-[90px] cursor-pointer" :disabled="!isEditor || !!historyDate">
+                    <option value="Approved">Approved</option>
+                    <option value="Pending">Pending</option>
+                    <option value="On Process">On Process</option>
+                    <option value="90%">90%</option>
+                    <option value="75%">75%</option>
+                    <option value="50%">50%</option>
+                    <option value="25%">25%</option>
+                    <option value="0%">0%</option>
+                  </select>
+                </td>
+                <td class="px-2 py-2 text-center bg-orange-50/30" v-show="!hiddenColumns.includes('ncr')"> <!-- PUNCH LIST Zone Summary -->
+                  <span v-if="ncrByGroupKey(group.key).total > 0"
+                    :class="ncrByGroupKey(group.key).done === ncrByGroupKey(group.key).total ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-orange-700 bg-orange-50 border-orange-200'"
+                    class="font-bold px-1.5 py-0.5 rounded text-[10px] border">
+                    {{ ncrByGroupKey(group.key).done }}/{{ ncrByGroupKey(group.key).total }}
+                  </span>
+                  <span v-else class="text-gray-300 text-[10px]">—</span>
+                </td>
+                <td class="px-2 py-2 text-gray-400 italic" :colspan="1 + (hiddenColumns.includes('remark') ? 0 : 1) + (hiddenColumns.includes('updated_date') ? 0 : 1)">— Summary —</td>
+              </tr>
+              <!-- Expanded Job Rows -->
+              <template v-if="expandedGroups[group.key]">
+                <tr v-for="task in group.tasks" :key="task.id" class="hover:bg-blue-50/50 transition-colors">
+                  <td class="px-2 py-1"></td>
+                  <td class="px-2 py-1 text-center">
+                    <svg
+                      v-if="allMappedTaskKeys.includes(`${task.location.floor}||${task.location.zone_room}||${task.job_type}`)"
+                      class="w-3.5 h-3.5 text-emerald-500 inline" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clip-rule="evenodd"></path>
+                    </svg>
+                    <span v-else class="text-gray-300 text-[10px]">—</span>
+                  </td>
+                  <td class="px-2 py-1 text-gray-400 text-[10px]"></td>
+                  <td class="px-2 py-1 text-gray-400 text-[10px]"></td>
+                  <td
+                    class="px-2 py-1.5 font-semibold text-blue-800 cursor-pointer hover:text-blue-600 underline decoration-blue-200"
+                    @click="zoomToTask(task)">{{ task.job_type }}</td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('progress')"><input type="text" v-model="task.progress" @input="markUpdated(task)"
+                      :disabled="!!historyDate" class="table-input text-right font-bold text-blue-700"></td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('area_finish')"><input type="text" v-model="task.area_finish" @input="markUpdated(task)"
+                      :disabled="!!historyDate" class="table-input text-right"></td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('area_remaining')"><input type="text" v-model="task.area_remaining" :title="task.area_remaining"
+                      @input="markUpdated(task)" :disabled="!!historyDate" class="table-input"></td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('start_date')">
+                    <input type="date" v-model="task.start_date" @input="markUpdated(task)"
+                      :disabled="!!historyDate" class="table-input" :title="fmtDate(task.start_date)">
+                  </td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('finish_date')">
+                    <input type="date" v-model="task.finish_date" @input="markUpdated(task)"
+                      :disabled="!!historyDate" class="table-input" :title="fmtDate(task.finish_date)">
+                  </td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('material')"><input type="text" v-model="task.material" @input="markUpdated(task)"
+                      :disabled="!!historyDate" class="table-input text-right"></td>
+                  <td class="px-2 py-1.5 supplier-cell" v-show="!hiddenColumns.includes('supplier')">
+                    <span v-if="isEditor">{{ task.supplier }}</span>
+                    <span v-else class="text-gray-300 italic text-[10px]" title="Sign in as Editor to view">hidden</span>
+                  </td>
+                  <td class="px-2 py-1.5" v-show="!hiddenColumns.includes('as_built')"></td> <!-- AS-BUILT (task row empty, shows on zone row) -->
+                  <td class="px-2 py-1 text-center bg-orange-50/20" v-show="!hiddenColumns.includes('ncr')"> <!-- PUNCH LIST -->
+                    <span v-if="ncrByTaskIdReport(task.id).total > 0"
+                      :class="ncrByTaskIdReport(task.id).done === ncrByTaskIdReport(task.id).total ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-orange-700 bg-orange-50 border-orange-200'"
+                      class="font-bold px-1.5 py-0.5 rounded text-[10px] border">
+                      {{ ncrByTaskIdReport(task.id).done }}/{{ ncrByTaskIdReport(task.id).total }}
+                    </span>
+                    <span v-else class="text-gray-300 text-[10px]">—</span>
+                  </td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('remark')"><input type="text" v-model="task.remark" :title="task.remark"
+                      @input="markUpdated(task)" :disabled="!!historyDate" class="table-input"></td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('updated_date')">
+                    <input type="date" v-model="task.updated_date" :disabled="!!historyDate"
+                      class="table-input bg-amber-50/50 font-bold text-indigo-700" :title="fmtDate(task.updated_date)">
+                  </td>
+                  <td class="px-2 py-1 text-center">
+                    <button v-if="isEditor" @click="saveTask(task)" :disabled="!!historyDate"
+                      :class="['px-3 py-1.5 rounded-md text-[10px] font-bold shadow-sm transition-all', historyDate ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow hover:shadow-md active:scale-95']">Save</button>
+                    <span v-else class="text-[10px] text-slate-400 italic">Read only</span>
+                  </td>
+                </tr>
+              </template>
+            </template>
+            <tr v-if="groupedReportTasks.length === 0">
+              <td colspan="15" class="px-4 py-8 text-center text-gray-500 italic">No tasks found matching your filters.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-2 text-xs text-gray-500 flex justify-between px-1">
+        <span>Showing {{ sortedFilteredReportTasks.length }} tasks in {{ groupedReportTasks.length }} zones ({{
+          reportTasks.length }} total)</span>
+        <span>Click a zone row to navigate. Click a job name to zoom to component.</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3001/api';
+    const API_KEY = 'CP-SKETCHUP-SECRET-KEY-2024';
+
+    // ── Firebase Configuration ─────────────────────────────────────────────
+    // REPLACE these values with your Firebase project config after creating
+    // the project in Firebase Console (Project Settings > Your apps > Web)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDL4MsO8pbOZiEcILPH7aXO9OZ-a5EdY_c",
+      authDomain: "bim-construction-progress.firebaseapp.com",
+      projectId: "bim-construction-progress",
+      storageBucket: "bim-construction-progress.firebasestorage.app",
+      messagingSenderId: "489806675712",
+      appId: "1:489806675712:web:3647357179216f5a107de5",
+      measurementId: "G-KE5DVZ1VET"
+    };
+
+    // Initialize Firebase (only if config is filled in)
+    let firebaseAuth = null;
+    let currentFirebaseUser = null;
+    let currentIdToken = null;
+
+    try {
+      if (firebaseConfig.apiKey !== 'REPLACE_WITH_YOUR_API_KEY') {
+        firebase.initializeApp(firebaseConfig);
+        firebaseAuth = firebase.auth();
+      } else {
+        console.warn('⚠️ Firebase not configured. Update firebaseConfig in inspector.html.');
+      }
+    } catch (e) {
+      console.error('Firebase init failed:', e);
+    }
+
+    // Login overlay controls
+    function showAuthOverlay() {
+      document.getElementById('auth-overlay').style.display = 'flex';
+    }
+    function hideAuthOverlay() {
+      document.getElementById('auth-overlay').style.display = 'none';
+    }
+
+    async function doLogin() {
+      const btn = document.getElementById('auth-login-btn');
+      const errEl = document.getElementById('auth-error');
+      const email = document.getElementById('auth-email').value.trim();
+      const pass = document.getElementById('auth-password').value;
+      if (!email || !pass) { showAuthError('Please enter email and password.'); return; }
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+      errEl.style.display = 'none';
+      try {
+        await firebaseAuth.signInWithEmailAndPassword(email, pass);
+        // onAuthStateChanged will handle the rest
+      } catch (e) {
+        const msgs = {
+          'auth/user-not-found': 'No account found with this email.',
+          'auth/wrong-password': 'Incorrect password.',
+          'auth/invalid-email': 'Invalid email address.',
+          'auth/too-many-requests': 'Too many attempts. Please try again later.',
+        };
+        showAuthError(msgs[e.code] || e.message);
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    }
+
+    function showAuthError(msg) {
+      const el = document.getElementById('auth-error');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function enterAsViewer() {
+      hideAuthOverlay();
+      // App will run with no user = viewer mode
+    }
+
+    // Called from Ruby toolbar Sign Out button
+    function doSignOutFromRuby() {
+      if (firebaseAuth) {
+        firebaseAuth.signOut().then(() => {
+          // onAuthStateChanged will show overlay automatically
+        }).catch(e => console.error('Sign out error:', e));
+      } else {
+        showAuthOverlay();
+      }
+    }
+
+    // Allow Enter key to submit login
+    document.addEventListener('DOMContentLoaded', () => {
+      ['auth-email', 'auth-password'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+      });
+    });
+
+    // ── Fetch override: always send x-api-key + Bearer token when available ──
+    const originalFetch = window.fetch;
+    window.fetch = async function () {
+      let [resource, config] = arguments;
+      if (typeof resource === 'string' && resource.startsWith(API_URL)) {
+        config = config || {};
+        config.headers = config.headers || {};
+        // Always send API key (allows backend to work without Firebase Admin)
+        config.headers['x-api-key'] = API_KEY;
+        // Also attach Firebase token if logged in (for cloud deployment)
+        if (currentIdToken) {
+          config.headers['authorization'] = `Bearer ${currentIdToken}`;
+        }
+      }
+      return originalFetch(resource, config);
+    };
+
+    const { createApp, ref, computed, onMounted, watch } = Vue;
+
+    createApp({
+      setup() {
+        const loading = ref(false);
+
+        // ── Auth State ──────────────────────────────────────────────────────
+        const authUser = ref(null);   // Firebase user object or null
+        const isEditor = ref(false);  // true when role === 'editor'
+
+        const showLoginOverlay = () => showAuthOverlay();
+
+        const doSignOut = async () => {
+          if (firebaseAuth) {
+            await firebaseAuth.signOut();
+          }
+          authUser.value = null;
+          isEditor.value = false;
+          currentFirebaseUser = null;
+          currentIdToken = null;
+          showAuthOverlay();
+        };
+
+        // Listen to Firebase auth state changes
+        if (firebaseAuth) {
+          firebaseAuth.onAuthStateChanged(async (user) => {
+            if (user) {
+              currentFirebaseUser = user;
+              currentIdToken = await user.getIdToken();
+              // Auto-refresh token before expiry
+              setInterval(async () => {
+                if (currentFirebaseUser) {
+                  currentIdToken = await currentFirebaseUser.getIdToken(true);
+                }
+              }, 55 * 60 * 1000);
+
+              // Check custom role claim
+              const tokenResult = await user.getIdTokenResult();
+              isEditor.value = tokenResult.claims.role === 'editor';
+              authUser.value = { email: user.email, uid: user.uid };
+              hideAuthOverlay();
+            } else {
+              authUser.value = null;
+              isEditor.value = false;
+              currentFirebaseUser = null;
+              currentIdToken = null;
+              showAuthOverlay();
+            }
+          });
+        } else {
+          // Firebase not configured: show overlay as viewer option
+          setTimeout(() => showAuthOverlay(), 200);
+        }
+        const inSketchup = ref(typeof window.sketchup !== 'undefined');
+        const activeTab = ref(inSketchup.value ? 'inspector' : 'report');
+
+        const modal = ref({ show: false, type: 'alert', title: '', message: '', onConfirm: null, onCancel: null });
+
+        const showAlert = (title, message) => {
+          modal.value = {
+            show: true, type: 'alert', title, message,
+            onConfirm: () => { modal.value.show = false; }
+          };
+        };
+
+        const showConfirm = (title, message) => {
+          return new Promise((resolve) => {
+            modal.value = {
+              show: true, type: 'confirm', title, message,
+              onConfirm: () => { modal.value.show = false; resolve(true); },
+              onCancel: () => { modal.value.show = false; resolve(false); }
+            };
+          });
+        };
+
+        // Inspector State
+        const selection = ref({ type: null, mapped: false });
+        const locations = ref([]);
+        const tasks = ref([]);
+        const searchQuery = ref('');
+        const selectedLocationId = ref(null);
+        const selectedTaskId = ref(null);
+        const currentLocation = ref(null);
+        const currentTask = ref(null);
+        const locationTasks = ref([]);
+
+        // Defect State
+        const locationDefects = ref([]);
+        const currentDefect = ref(null);
+        const defectUpdated = ref(false);
+        const showAddDefectForm = ref(false);
+        const assignMode = ref('job');          // 'job' | 'defect'
+        const assignableDefects = ref([]);       // unassigned defects for parent zone
+        const selectedDefectId = ref(null);
+        const uploadingDefectImages = ref(false);
+        const defectSort = ref({ key: 'classification', order: 'asc' });
+        const defectForm = ref({ name: '', classification: 'Minor', status: 'Not Start', task_id: '', supplier: '', start_date: '', finish_date: '', remark: '' });
+
+        const sortedLocationDefects = computed(() => {
+          return [...locationDefects.value].sort((a, b) => {
+            let valA, valB;
+            const k = defectSort.value.key;
+            if (k === 'classification') { valA = a.classification; valB = b.classification; }
+            else if (k === 'job') { valA = a.task ? a.task.job_type : ''; valB = b.task ? b.task.job_type : ''; }
+            else { valA = a[k] || ''; valB = b[k] || ''; }
+            const cmp = String(valA).localeCompare(String(valB), undefined, { numeric: true, sensitivity: 'base' });
+            return defectSort.value.order === 'asc' ? cmp : -cmp;
+          });
+        });
+
+        const toggleDefectSort = (key) => {
+          if (defectSort.value.key === key) defectSort.value.order = defectSort.value.order === 'asc' ? 'desc' : 'asc';
+          else { defectSort.value.key = key; defectSort.value.order = 'asc'; }
+        };
+
+        const onDefectFormTaskChange = () => {
+          if (defectForm.value.task_id) {
+            const t = locationTasks.value.find(t => t.id === defectForm.value.task_id);
+            if (t && t.supplier) defectForm.value.supplier = t.supplier;
+          }
+        };
+
+        const fetchLocationDefects = async (floor, zone_room) => {
+          try {
+            const res = await fetch(`${API_URL}/defects?floor=${encodeURIComponent(floor)}&zone_room=${encodeURIComponent(zone_room)}`);
+            locationDefects.value = await res.json();
+          } catch (e) { console.error(e); locationDefects.value = []; }
+        };
+
+        // Enrich locationTasks with sketchup_mapped flag (uses allMappedTaskKeys)
+        const enrichLocationTasksMapped = () => {
+          locationTasks.value = locationTasks.value.map(t => ({
+            ...t,
+            sketchup_mapped: allMappedTaskKeys.value.includes(
+              `${t.location.floor}||${t.location.zone_room}||${t.job_type}`
+            )
+          }));
+        };
+
+        // ── PUNCH LIST Stats ──────────────────────────────────────────────────────
+        // ncrStats: array of { location_id, task_id, total, done } for Major defects
+        const ncrStats = ref([]);
+
+        const fetchNcrStats = async () => {
+          try {
+            const res = await fetch(`${API_URL}/defects/stats`);
+            ncrStats.value = await res.json();
+          } catch (e) { console.error(e); ncrStats.value = []; }
+        };
+
+        // Inspector Zone: NCR by task.id (uses locationDefects already loaded)
+        const ncrByTaskId = (taskId) => {
+          const major = locationDefects.value.filter(d => d.classification === 'Major' && d.task_id === taskId);
+          return { total: major.length, done: major.filter(d => d.status === 'Done').length };
+        };
+
+        // Report: NCR by task.id (uses global ncrStats)
+        const ncrByTaskIdReport = (taskId) => {
+          const row = ncrStats.value.find(s => s.task_id === taskId);
+          return row ? { total: row.total, done: row.done } : { total: 0, done: 0 };
+        };
+
+        // Report: NCR aggregate for a zone group (sum all tasks in that group)
+        const ncrByGroupKey = (groupKey) => {
+          // groupKey = "floor||zone" — match via groupedReportTasks tasks
+          const group = groupedReportTasks.value.find(g => g.key === groupKey);
+          if (!group) return { total: 0, done: 0 };
+          let total = 0, done = 0;
+          for (const task of group.tasks) {
+            const s = ncrStats.value.find(r => r.task_id === task.id);
+            if (s) { total += s.total; done += s.done; }
+          }
+          return { total, done };
+        };
+
+
+
+        const createDefect = async () => {
+          if (!defectForm.value.name.trim() || !selection.value.cp_floor) return;
+          try {
+            const payload = {
+              floor: selection.value.cp_floor,
+              zone_room: selection.value.cp_zone_room,
+              name: defectForm.value.name.trim(),
+              classification: defectForm.value.classification,
+              status: defectForm.value.status,
+              task_id: defectForm.value.task_id || null,
+              supplier: defectForm.value.supplier || null,
+              start_date: defectForm.value.start_date || null,
+              finish_date: defectForm.value.finish_date || null,
+              remark: defectForm.value.remark || null,
+              job_type_label: defectForm.value.task_id ? (locationTasks.value.find(t=>t.id===defectForm.value.task_id)||{}).job_type || '' : ''
+            };
+            const res = await fetch(`${API_URL}/defects`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (res.ok) {
+              const newDefect = await res.json();
+              locationDefects.value.push(newDefect);
+              defectForm.value = { name: '', classification: 'Minor', status: 'Not Start', task_id: '', supplier: '', start_date: '', finish_date: '', remark: '' };
+              showAddDefectForm.value = false;
+              showStatus(`Defect ${newDefect.number_code} created!`);
+            } else {
+              const err = await res.json();
+              showAlert('Error', err.error || 'Failed to create defect');
+            }
+          } catch (e) { showAlert('Error', e.message); }
+        };
+
+        const deleteDefect = async (defect) => {
+          const confirmed = await showConfirm('Delete Defect', `Delete "${defect.name}"? This cannot be undone.`);
+          if (!confirmed) return;
+          try {
+            const res = await fetch(`${API_URL}/defects/${defect.id}`, { method: 'DELETE' });
+            if (res.ok) {
+              locationDefects.value = locationDefects.value.filter(d => d.id !== defect.id);
+              showStatus('Defect deleted');
+            } else { showAlert('Error', 'Failed to delete defect'); }
+          } catch (e) { showAlert('Error', e.message); }
+        };
+
+        const openDefectDetail = (defect) => {
+          currentDefect.value = JSON.parse(JSON.stringify(defect)); // deep copy
+          defectUpdated.value = false;
+        };
+
+        const saveDefect = async () => {
+          if (!currentDefect.value) return;
+          try {
+            const payload = { ...currentDefect.value };
+            delete payload.location; delete payload.task; delete payload.images; delete payload.histories;
+            const res = await fetch(`${API_URL}/defects/${currentDefect.value.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+              const updated = await res.json();
+              currentDefect.value = updated;
+              // update in list
+              const idx = locationDefects.value.findIndex(d => d.id === updated.id);
+              if (idx !== -1) locationDefects.value[idx] = updated;
+              defectUpdated.value = false;
+              // Refresh NCR stats (status may have changed)
+              await fetchNcrStats();
+              showStatus('Defect saved!');
+            } else {
+              const err = await res.json();
+              showAlert('Error', err.error || 'Failed to save defect');
+            }
+          } catch (e) { showAlert('Error', e.message); }
+        };
+
+        const loadDefectsForAssign = async () => {
+          if (!selection.value.parent_floor || !selection.value.parent_zone_room) { assignableDefects.value = []; return; }
+          try {
+            const res = await fetch(`${API_URL}/defects?floor=${encodeURIComponent(selection.value.parent_floor)}&zone_room=${encodeURIComponent(selection.value.parent_zone_room)}`);
+            const all = await res.json();
+            // Only show defects that have no SketchUp instance assigned yet
+            assignableDefects.value = all.filter(d => !d.sketchup_instance_name);
+          } catch (e) { assignableDefects.value = []; }
+        };
+
+        const assignDefect = async () => {
+          if (!selectedDefectId.value || !window.sketchup) return;
+          const defect = assignableDefects.value.find(d => d.id === selectedDefectId.value);
+          if (!defect) return;
+          window.sketchup.assignDefect({
+            floor: defect.location.floor,
+            zone_room: defect.location.zone_room,
+            number_code: defect.number_code,
+            name: defect.number_code
+          });
+          // Mark as assigned in DB
+          try {
+            await fetch(`${API_URL}/defects/${defect.id}`, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sketchup_instance_name: defect.number_code })
+            });
+            assignableDefects.value = assignableDefects.value.filter(d => d.id !== defect.id);
+          } catch (e) { console.error(e); }
+          showStatus('Defect assigned to model!');
+          selectedDefectId.value = null;
+        };
+
+        const unassignDefectItem = async () => {
+          if (!window.sketchup) return;
+          // Clear sketchup_instance_name in DB
+          if (currentDefect.value) {
+            try {
+              await fetch(`${API_URL}/defects/${currentDefect.value.id}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sketchup_instance_name: null })
+              });
+            } catch (e) { console.error(e); }
+          }
+          window.sketchup.unassignDefect();
+          showStatus('Defect unassigned');
+        };
+
+        const uploadDefectImages = async (event) => {
+          if (!currentDefect.value) return;
+          const files = event.target.files;
+          if (!files.length) return;
+          const currentCount = currentDefect.value.images ? currentDefect.value.images.length : 0;
+          if (currentCount + files.length > 10) { showAlert('Limit Reached', 'Maximum 10 images allowed.'); return; }
+          uploadingDefectImages.value = true;
+          try {
+            const validFiles = [];
+            for (let i = 0; i < files.length; i++) {
+              const file = files[i];
+              if (file.size > 5 * 1024 * 1024) { showAlert('Too Large', `${file.name} exceeds 5MB.`); continue; }
+              const base64 = await toBase64(file);
+              validFiles.push({ name: file.name, base64 });
+            }
+            if (validFiles.length > 0) {
+              const res = await fetch(`${API_URL}/defects/${currentDefect.value.id}/images`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ images: validFiles }) });
+              if (res.ok) {
+                const newImgs = await res.json();
+                if (!currentDefect.value.images) currentDefect.value.images = [];
+                currentDefect.value.images.push(...newImgs);
+                showStatus('Images uploaded!');
+              } else { showAlert('Error', 'Upload failed'); }
+            }
+          } catch (e) { showAlert('Error', e.message); }
+          finally { uploadingDefectImages.value = false; event.target.value = ''; }
+        };
+
+        const deleteDefectImage = async (imageId) => {
+          if (!currentDefect.value) return;
+          const confirmed = await showConfirm('Delete Image', 'Delete this image?');
+          if (!confirmed) return;
+          try {
+            const res = await fetch(`${API_URL}/defects/${currentDefect.value.id}/images/${imageId}`, { method: 'DELETE' });
+            if (res.ok) {
+              currentDefect.value.images = currentDefect.value.images.filter(i => i.id !== imageId);
+              showStatus('Image deleted');
+            }
+          } catch (e) { showAlert('Error', e.message); }
+        };
+
+
+        const reportTasks = ref([]);
+        const historyDate = ref('');
+        // allMappedTaskKeys: array of "floor||zone_room||job_type" natural composite keys
+        const allMappedTaskKeys = ref([]);
+        const filters = ref({ floor: [], zone: [], job_type: [], supplier: [], progress: [] });
+        const sort = ref({ key: 'floor', order: 'asc' });
+        const dropdowns = ref({ floor: false, zone: false, job_type: false, supplier: false, progress: false });
+        
+        const hiddenColumns = ref([]);
+        const showColDropdown = ref(false);
+        const toggleColumn = (col) => {
+          const idx = hiddenColumns.value.indexOf(col);
+          if (idx > -1) hiddenColumns.value.splice(idx, 1);
+          else hiddenColumns.value.push(col);
+        };
+        const hidableColumnsList = [
+          { key: 'progress', label: 'Progress' },
+          { key: 'area_finish', label: 'Area Finish' },
+          { key: 'area_remaining', label: 'Area Remaining' },
+          { key: 'start_date', label: 'Start Date' },
+          { key: 'finish_date', label: 'Finish Date' },
+          { key: 'material', label: 'Material' },
+          { key: 'supplier', label: 'Supplier' },
+          { key: 'as_built', label: 'AS-BUILT' },
+          { key: 'ncr', label: 'PUNCH LIST' },
+          { key: 'remark', label: 'Remark' },
+          { key: 'updated_date', label: 'Updated' }
+        ];
+
+        const setFilter = (key, value) => {
+          if (value === '') {
+            filters.value[key] = [];
+            dropdowns.value[key] = false;
+          } else {
+            const idx = filters.value[key].indexOf(value);
+            if (idx > -1) {
+              filters.value[key].splice(idx, 1);
+            } else {
+              filters.value[key].push(value);
+            }
+          }
+          applyFilters();
+        };
+
+        const hideDropdown = (key) => {
+          setTimeout(() => dropdowns.value[key] = false, 150);
+        };
+
+        const parseToIsoDate = (dStr) => {
+          if (!dStr) return '';
+          if (/^\d{4}-\d{2}-\d{2}$/.test(dStr)) return dStr;
+
+          const parts = dStr.split(/[/-]/);
+          if (parts.length === 3 && parts[2].length === 4) {
+            return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+          }
+
+          const d = new Date(dStr);
+          if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+
+          return '';
+        };
+
+        // Format ISO date (YYYY-MM-DD) → DD/MM/YYYY for display
+        const fmtDate = (isoStr) => {
+          if (!isoStr) return '';
+          const m = isoStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+          if (!m) return isoStr;
+          return `${m[3]}/${m[2]}/${m[1]}`;
+        };
+
+        const processTaskDates = (task) => {
+          if (task.start_date) task.start_date = parseToIsoDate(task.start_date);
+          if (task.finish_date) task.finish_date = parseToIsoDate(task.finish_date);
+          if (task.updated_date) task.updated_date = parseToIsoDate(task.updated_date);
+          return task;
+        };
+
+        const getTodayIsoDate = () => {
+          const d = new Date();
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        };
+
+        const markUpdated = (task) => {
+          if (!historyDate.value) {
+            task.updated_date = getTodayIsoDate();
+          }
+        };
+
+        const fetchHistory = async () => {
+          if (!historyDate.value) return clearHistory();
+          loading.value = true;
+          try {
+            const res = await fetch(`${API_URL}/history?date=${historyDate.value}`);
+            const rawData = await res.json();
+            reportTasks.value = rawData.map(processTaskDates);
+            await refreshHeatmap(); // Auto-update heatmap for the selected date
+          } catch (e) { console.error(e); }
+          loading.value = false;
+        };
+
+        const clearHistory = async () => {
+          historyDate.value = '';
+          loading.value = true;
+          try {
+            const res = await fetch(`${API_URL}/tasks`);
+            reportTasks.value = (await res.json()).map(processTaskDates);
+            await refreshHeatmap();
+          } catch (e) { console.error(e); }
+          loading.value = false;
+        };
+
+        const toggleSort = (key, event) => {
+          if (event) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            // If clicked within 15px of the right edge, ignore it (it's a resize click)
+            if (event.clientX > rect.right - 15) {
+              return;
+            }
+          }
+          if (sort.value.key === key) {
+            sort.value.order = sort.value.order === 'asc' ? 'desc' : 'asc';
+          } else {
+            sort.value.key = key;
+            sort.value.order = 'asc';
+          }
+        };
+
+        const resetFilters = () => {
+          filters.value = { floor: [], zone: [], job_type: [], supplier: [], progress: [] };
+          applyFilters();
+        };
+
+        const applyFilters = () => {
+          if (window.sketchup) {
+            const visibleKeys = sortedFilteredReportTasks.value.map(t =>
+              `${t.location.floor}||${t.location.zone_room}||${t.job_type}`
+            );
+            window.sketchup.filterModels({ visible_task_keys: visibleKeys });
+          }
+        };
+
+        const downloadExcel = () => {
+          window.location.href = `${API_URL}/export-excel`;
+        };
+
+        const downloadCsv = () => {
+          // All possible columns in display order
+          const allColumns = [
+            { key: 'floor',          label: 'Floor',          always: true },
+            { key: 'zone',           label: 'Zone',           always: true },
+            { key: 'job_type',       label: 'Job Type',       always: true },
+            { key: 'model',          label: 'Mapped',         always: true },
+            { key: 'progress',       label: 'Progress (%)',   always: false },
+            { key: 'area_finish',    label: 'Area Finish',    always: false },
+            { key: 'area_remaining', label: 'Area Remaining', always: false },
+            { key: 'start_date',     label: 'Start Date',     always: false },
+            { key: 'finish_date',    label: 'Finish Date',    always: false },
+            { key: 'material',       label: 'Material',       always: false },
+            { key: 'supplier',       label: 'Supplier',       always: false },
+            { key: 'as_built',       label: 'AS-BUILT',       always: false },
+            { key: 'ncr',            label: 'PUNCH LIST',     always: false },
+            { key: 'remark',         label: 'Remark',         always: false },
+            { key: 'updated_date',   label: 'Updated Date',   always: false },
+          ];
+
+          // Only keep columns that are visible (not hidden)
+          const visibleColumns = allColumns.filter(col =>
+            col.always || !hiddenColumns.value.includes(col.key)
+          );
+
+          const headerRow = visibleColumns.map(c => `"${c.label}"`).join(',');
+
+          // Use the already-filtered + sorted task list
+          const rows = sortedFilteredReportTasks.value.map(t => {
+            const isMapped = allMappedTaskKeys.value.includes(
+              `${t.location.floor}||${t.location.zone_room}||${t.job_type}`
+            );
+            const ncr = ncrByTaskIdReport(t.id);
+
+            return visibleColumns.map(col => {
+              switch (col.key) {
+                case 'floor':          return `"${t.location.floor}"`;
+                case 'zone':           return `"${t.location.zone_room}"`;
+                case 'job_type':       return `"${t.job_type}"`;
+                case 'model':          return isMapped ? '"Yes"' : '"No"';
+                case 'progress':       return `"${t.progress || ''}"`;
+                case 'area_finish':    return `"${t.area_finish || ''}"`;
+                case 'area_remaining': return `"${t.area_remaining || ''}"`;
+                case 'start_date':     return `"${t.start_date || ''}"`;
+                case 'finish_date':    return `"${t.finish_date || ''}"`;
+                case 'material':       return `"${t.material || ''}"`;
+                case 'supplier':       return isEditor.value ? `"${t.supplier || ''}"` : '"hidden"';
+                case 'as_built':       return `"${t.location ? (t.location.as_built || '') : ''}"`;
+                case 'ncr':            return ncr.total > 0 ? `"${ncr.done}/${ncr.total}"` : '"—"';
+                case 'remark':         return `"${(t.remark || '').replace(/"/g, '""')}"`;
+                case 'updated_date':   return `"${t.updated_date || ''}"`;
+                default:               return '""';
+              }
+            }).join(',');
+          });
+
+          // Filename: include date + active filter summary
+          const today = new Date().toISOString().slice(0, 10);
+          const activeFilters = Object.entries(filters.value)
+            .filter(([, v]) => v.length > 0)
+            .map(([k, v]) => `${k}=${v.join('+')}`)
+            .join('_');
+          const filename = `Report_${today}${activeFilters ? '_' + activeFilters : ''}.csv`;
+
+          const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headerRow + "\n" + rows.join("\n");
+          const link = document.createElement("a");
+          link.setAttribute("href", encodeURI(csvContent));
+          link.setAttribute("download", filename);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
+
+        const statusMessage = ref('');
+        const loadingHeatmap = ref(false);
+
+        const showStatus = (msg) => {
+          statusMessage.value = msg;
+          setTimeout(() => statusMessage.value = '', 3000);
+        };
+
+        const switchTab = async (tab) => {
+          activeTab.value = tab;
+          if (tab === 'report') {
+            if (window.sketchup) window.sketchup.resizeDialog({ width: 1200, height: 700 });
+            loading.value = true;
+
+            try {
+              const [tasksRes] = await Promise.all([
+                fetch(`${API_URL}/tasks`),
+                fetchNcrStats()
+              ]);
+              const rawData = await tasksRes.json();
+              reportTasks.value = rawData.map(processTaskDates);
+            } catch (e) { console.error(e); }
+            loading.value = false;
+
+            // Ask Ruby for mapped IDs — applyFilters is triggered inside receiveMappedTasks
+            if (window.sketchup) window.sketchup.getAllMappedTasks();
+          } else {
+            // Switching TO Inspector: always restore full visibility.
+            // filterModels is a Report-only feature; never call it here.
+            if (window.sketchup) {
+              window.sketchup.resizeDialog({ width: 450, height: 820 });
+              window.sketchup.unhideAll();
+            }
+          }
+        };
+
+        // Called from Ruby after getAllMappedTasks() — receives composite natural keys
+        window.receiveMappedTasks = function (keys) {
+          allMappedTaskKeys.value = keys;
+          if (activeTab.value === 'report') {
+            applyFilters();
+          }
+          // Also enrich inspector zone task list if it's currently showing
+          if (locationTasks.value.length > 0) {
+            enrichLocationTasksMapped();
+          }
+        };
+
+        const uniqueFloors = computed(() => [...new Set(reportTasks.value.map(t => t.location && t.location.floor))].filter(Boolean).sort());
+        const uniqueZones = computed(() => [...new Set(reportTasks.value.map(t => t.location && t.location.zone_room))].filter(Boolean).sort());
+        const uniqueJobTypes = computed(() => [...new Set(reportTasks.value.map(t => t.job_type))].filter(Boolean).sort());
+        const uniqueSuppliers = computed(() => [...new Set(reportTasks.value.map(t => t.supplier))].filter(Boolean).sort());
+        const uniqueProgresses = computed(() => [...new Set(reportTasks.value.map(t => t.progress))].filter(Boolean).sort());
+
+        const sortedFilteredReportTasks = computed(() => {
+          let result = reportTasks.value;
+
+          // Apply Filters
+          if (filters.value.floor.length) result = result.filter(t => t.location && filters.value.floor.includes(t.location.floor));
+          if (filters.value.zone.length) result = result.filter(t => t.location && filters.value.zone.includes(t.location.zone_room));
+          if (filters.value.job_type.length) result = result.filter(t => filters.value.job_type.includes(t.job_type));
+          if (filters.value.supplier.length) result = result.filter(t => t.supplier && filters.value.supplier.includes(t.supplier));
+          if (filters.value.progress.length) result = result.filter(t => filters.value.progress.includes(String(t.progress)));
+
+          // Apply Sorting
+          return [...result].sort((a, b) => {
+            let valA, valB;
+
+            if (sort.value.key === 'floor') {
+              valA = a.location.floor;
+              valB = b.location.floor;
+            } else if (sort.value.key === 'zone') {
+              valA = a.location.zone_room;
+              valB = b.location.zone_room;
+            } else {
+              valA = a[sort.value.key] || '';
+              valB = b[sort.value.key] || '';
+            }
+
+            if (typeof valA === 'string') {
+              const cmp = valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' });
+              return sort.value.order === 'asc' ? cmp : -cmp;
+            } else {
+              return sort.value.order === 'asc' ? valA - valB : valB - valA;
+            }
+          });
+        });
+
+        // --- Grouped Report Tasks (Expand/Collapse) ---
+        const expandedGroups = ref({});
+
+        const groupedReportTasks = computed(() => {
+          const tasks = sortedFilteredReportTasks.value;
+          const groupMap = {};
+          tasks.forEach(t => {
+            const key = `${t.location.floor}||${t.location.zone_room}`;
+            if (!groupMap[key]) {
+              groupMap[key] = {
+                key,
+                floor: t.location.floor,
+                zone: t.location.zone_room,
+                as_built: t.location.as_built,
+                locationId: t.location.id,
+                tasks: []
+              };
+            }
+            groupMap[key].tasks.push(t);
+          });
+
+          let groups = Object.values(groupMap).map(g => {
+            const nums = (arr) => arr.map(v => parseFloat(v) || 0);
+            const progNums = nums(g.tasks.map(t => String(t.progress || '0').replace('%', '')));
+            g.avgProgress = progNums.length ? Math.round(progNums.reduce((a, b) => a + b, 0) / progNums.length) : 0;
+            const sumFinish = nums(g.tasks.map(t => t.area_finish)).reduce((a, b) => a + b, 0);
+            g.sumAreaFinish = sumFinish ? Number(sumFinish.toFixed(2)) : '';
+            const sumRem = nums(g.tasks.map(t => t.area_remaining)).reduce((a, b) => a + b, 0);
+            g.sumAreaRemaining = sumRem ? Number(sumRem.toFixed(2)) : '';
+            // Start Date: earliest among sub-tasks (ignore blanks)
+            const startDates = g.tasks.map(t => t.start_date).filter(Boolean);
+            g.minStartDate = startDates.length ? startDates.sort()[0] : '';
+            // Finish Date: latest among sub-tasks (ignore blanks)
+            const finishDates = g.tasks.map(t => t.finish_date).filter(Boolean);
+            g.maxFinishDate = finishDates.length ? finishDates.sort().slice(-1)[0] : '';
+            // Date columns don't have sums
+            g.mappedCount = g.tasks.filter(t => allMappedTaskKeys.value.includes(`${t.location.floor}||${t.location.zone_room}||${t.job_type}`)).length;
+            g.modelRatio = g.tasks.length ? g.mappedCount / g.tasks.length : 0;
+            return g;
+          });
+
+          // Sort the groups based on aggregate values if sorting by an aggregate column
+          groups.sort((a, b) => {
+            let valA, valB;
+            if (sort.value.key === 'model') { valA = a.modelRatio; valB = b.modelRatio; }
+            else if (sort.value.key === 'progress') { valA = a.avgProgress; valB = b.avgProgress; }
+            else if (sort.value.key === 'area_finish') { valA = a.sumAreaFinish; valB = b.sumAreaFinish; }
+            else if (sort.value.key === 'area_remaining') { valA = a.sumAreaRemaining; valB = b.sumAreaRemaining; }
+            // Do not sort group by dates
+            else if (sort.value.key === 'floor') { valA = a.floor; valB = b.floor; }
+            else if (sort.value.key === 'zone') { valA = a.zone; valB = b.zone; }
+            else { return 0; } // Keep original order for task-specific columns
+
+            if (typeof valA === 'string') {
+              const cmp = valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' });
+              return sort.value.order === 'asc' ? cmp : -cmp;
+            } else {
+              return sort.value.order === 'asc' ? (valA || 0) - (valB || 0) : (valB || 0) - (valA || 0);
+            }
+          });
+
+          return groups;
+        });
+
+        const toggleGroup = (key) => {
+          expandedGroups.value[key] = !expandedGroups.value[key];
+        };
+
+        const expandAll = () => {
+          groupedReportTasks.value.forEach(g => { expandedGroups.value[g.key] = true; });
+        };
+
+        const collapseAll = () => {
+          groupedReportTasks.value.forEach(g => { expandedGroups.value[g.key] = false; });
+        };
+
+        const zoomToZone = (group) => {
+          if (window.sketchup) {
+            const key = `${group.floor}||${group.zone}`;
+            window.sketchup.zoomToTask({ task_key: key });
+          }
+        };
+
+
+        const filteredLocations = computed(() => {
+          if (!searchQuery.value) return locations.value;
+          const q = searchQuery.value.toLowerCase();
+          return locations.value.filter(l =>
+            l.zone_room.toLowerCase().includes(q) || l.floor.toLowerCase().includes(q)
+          );
+        });
+
+        const filteredTasks = computed(() => {
+          if (!searchQuery.value) return tasks.value;
+          const q = searchQuery.value.toLowerCase();
+          return tasks.value.filter(t => t.job_type.toLowerCase().includes(q));
+        });
+
+        const fetchLocations = async () => {
+          try {
+            const res = await fetch(`${API_URL}/locations`);
+            locations.value = await res.json();
+          } catch (e) { console.error(e); }
+        };
+
+        const fetchTasks = async () => {
+          try {
+            const res = await fetch(`${API_URL}/tasks`);
+            tasks.value = (await res.json()).map(processTaskDates);
+          } catch (e) { console.error(e); }
+        };
+
+        const assignLocation = async () => {
+          if (!selectedLocationId.value || !window.sketchup) return;
+          const loc = locations.value.find(l => l.id === selectedLocationId.value);
+          if (loc) {
+            window.sketchup.assignItem({
+              type: 'Group',
+              floor: loc.floor,
+              zone_room: loc.zone_room,
+              name: `${loc.zone_room} (${loc.floor})`
+            });
+            showStatus("Zone Assigned!");
+          }
+        };
+
+        const assignTask = async () => {
+          if (!selectedTaskId.value || !window.sketchup) return;
+          const task = tasks.value.find(t => t.id === selectedTaskId.value);
+          if (task && window.sketchup) {
+            // Pass natural keys — stable across reseeds and model copies
+            window.sketchup.assignItem({
+              type: 'ComponentInstance',
+              floor: task.location.floor,
+              zone_room: task.location.zone_room,
+              job_type: task.job_type,
+              name: `${task.job_type} (${task.location.zone_room} - ${task.location.floor})`,
+              tag: task.job_type
+            });
+            showStatus("Job Type Assigned!");
+          }
+        };
+
+        const unassignItem = () => {
+          if (window.sketchup) { window.sketchup.unassignItem(); showStatus("Item Unassigned"); }
+        };
+
+        const saveTask = async (taskObj) => {
+          if (!taskObj) return;
+          try {
+            const res = await fetch(`${API_URL}/tasks/${taskObj.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(taskObj)
+            });
+            if (res.ok) {
+              showStatus("Data Saved Successfully!");
+              if (window.sketchup) {
+                window.sketchup.redrawSelectedModel({ progress: taskObj.progress });
+              }
+            } else {
+              const err = await res.json();
+              showAlert("Error", err.error || "Failed to save data");
+            }
+          } catch (e) {
+            showAlert("Error", "Error saving: " + e.message);
+          }
+        };
+
+        const saveLocation = async () => {
+          if (!currentLocation.value) return;
+          try {
+            const res = await fetch(`${API_URL}/locations/${currentLocation.value.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(currentLocation.value)
+            });
+            if (res.ok) {
+              showStatus("Location Data Saved Successfully!");
+            } else {
+              const err = await res.json();
+              showAlert("Error", err.error || "Failed to save location data");
+            }
+          } catch (e) {
+            showAlert("Error", "Error saving: " + e.message);
+          }
+        };
+
+        const saveGroupLocation = async (group) => {
+          if (!group.locationId) return;
+          try {
+            const res = await fetch(`${API_URL}/locations/${group.locationId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ as_built: group.as_built })
+            });
+            if (res.ok) {
+              showStatus("AS-BUILT Saved!");
+            } else {
+              const err = await res.json();
+              showAlert("Error", err.error || "Failed to save data");
+            }
+          } catch (e) {
+            showAlert("Error", "Error saving: " + e.message);
+          }
+        };
+
+        const uploadingImages = ref(false);
+        const uploadImages = async (event, taskObj) => {
+          const files = event.target.files;
+          if (!files.length) return;
+
+          const currentCount = taskObj.images ? taskObj.images.length : 0;
+          if (currentCount + files.length > 10) {
+            showAlert("Limit Reached", "Maximum 10 images allowed per task.");
+            return;
+          }
+
+          uploadingImages.value = true;
+          try {
+            const validFiles = [];
+            for (let i = 0; i < files.length; i++) {
+              const file = files[i];
+              if (file.size > 5 * 1024 * 1024) {
+                showAlert("File Too Large", `${file.name} exceeds 5MB limit.`);
+                continue;
+              }
+              const base64 = await toBase64(file);
+              validFiles.push({ name: file.name, base64: base64 });
+            }
+
+            if (validFiles.length > 0) {
+              const res = await fetch(`${API_URL}/tasks/${taskObj.id}/images`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ images: validFiles })
+              });
+
+              if (res.ok) {
+                const newImgs = await res.json();
+                if (!taskObj.images) taskObj.images = [];
+                taskObj.images.push(...newImgs);
+                showStatus("Images uploaded successfully");
+              } else {
+                const err = await res.json();
+                showAlert("Upload Failed", err.error || "Error uploading images");
+              }
+            }
+          } catch (e) {
+            showAlert("Upload Error", e.message);
+          } finally {
+            uploadingImages.value = false;
+            event.target.value = '';
+          }
+        };
+
+        const deleteImage = async (taskObj, imageId) => {
+          const confirmed = await showConfirm("Delete Image", "Are you sure you want to delete this image?");
+          if (!confirmed) return;
+
+          try {
+            const res = await fetch(`${API_URL}/tasks/${taskObj.id}/images/${imageId}`, {
+              method: 'DELETE'
+            });
+            if (res.ok) {
+              taskObj.images = taskObj.images.filter(img => img.id !== imageId);
+              showStatus("Image deleted");
+            } else {
+              showAlert("Error", "Failed to delete image");
+            }
+          } catch (e) {
+            showAlert("Error", "Error deleting image: " + e.message);
+          }
+        };
+
+        const toBase64 = file => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = error => reject(error);
+        });
+
+        const unhideAll = () => {
+          if (window.sketchup) window.sketchup.unhideAll();
+          showStatus("All objects visible");
+        };
+
+        const refreshHeatmap = async () => {
+          if (!window.sketchup) return;
+          loadingHeatmap.value = true;
+          try {
+            const date = historyDate.value || getTodayIsoDate();
+            const res = await fetch(`${API_URL}/history?date=${date}`);
+            const tasksList = await res.json();
+
+            const tasksMap = {};
+            const zoneTotals = {};
+            const zoneCounts = {};
+
+            tasksList.forEach(t => {
+              if (t.location && t.job_type) {
+                const floor = t.location.floor;
+                const zone = t.location.zone_room;
+                const job = t.job_type;
+                const prog = parseFloat(String(t.progress || '0').replace('%', '')) || 0;
+
+                const taskKey = `${floor}||${zone}||${job}`;
+                tasksMap[taskKey] = prog;
+
+                const zoneKey = `${floor}||${zone}`;
+                if (!zoneTotals[zoneKey]) {
+                  zoneTotals[zoneKey] = 0;
+                  zoneCounts[zoneKey] = 0;
+                }
+                zoneTotals[zoneKey] += prog;
+                zoneCounts[zoneKey] += 1;
+              }
+            });
+
+            const locationsMap = {};
+            for (const key in zoneTotals) {
+              locationsMap[key] = zoneTotals[key] / zoneCounts[key];
+            }
+
+            window.sketchup.updateHeatmap({
+              tasks: tasksMap,
+              locations: locationsMap
+            });
+            showStatus("Heatmap Applied!");
+          } catch (e) { console.error(e); }
+          loadingHeatmap.value = false;
+        };
+
+        const zoomToTask = (task) => {
+          if (window.sketchup) {
+            const key = `${task.location.floor}||${task.location.zone_room}||${task.job_type}`;
+            window.sketchup.zoomToTask({ task_key: key });
+          }
+        };
+
+        // Zoom to a job component from Zone detail view — also triggers inspector update
+        const zoomToJobFromZone = (task) => {
+          if (window.sketchup) {
+            const key = `${task.location.floor}||${task.location.zone_room}||${task.job_type}`;
+            window.sketchup.zoomToTask({ task_key: key });
+            // Inspector will update automatically via InspectorObserver selection event
+          }
+        };
+
+        // Zoom to a defect component — triggers inspector to show Defect Detail view
+        const zoomToDefectItem = (defect) => {
+          if (window.sketchup && defect.sketchup_instance_name) {
+            window.sketchup.zoomToDefect({ number_code: defect.sketchup_instance_name });
+            // Inspector updates via InspectorObserver — will show Defect Detail view
+          }
+        };
+
+        const redrawModel = () => {
+          if (window.sketchup && currentTask.value) {
+            window.sketchup.redrawSelectedModel({ progress: currentTask.value.progress });
+            showStatus("Model Redrawn!");
+          }
+        };
+
+        window.updateSelection = async function (data) {
+          if (activeTab.value !== 'inspector') return;
+          selection.value = data;
+          currentTask.value = null;
+          currentDefect.value = null;
+          searchQuery.value = '';
+          selectedLocationId.value = null;
+          selectedTaskId.value = null;
+          selectedDefectId.value = null;
+          assignMode.value = 'job';
+          showAddDefectForm.value = false;
+
+          if (data.mapped) {
+            if (data.type === 'Group') {
+              // Mapped Group: load location, tasks, and defects for this zone
+              try {
+                const resLoc = await fetch(`${API_URL}/locations/lookup?floor=${encodeURIComponent(data.cp_floor)}&zone_room=${encodeURIComponent(data.cp_zone_room)}`);
+                currentLocation.value = await resLoc.json();
+                const res = await fetch(`${API_URL}/tasks?floor=${encodeURIComponent(data.cp_floor)}&zone_room=${encodeURIComponent(data.cp_zone_room)}`);
+                locationTasks.value = (await res.json()).map(processTaskDates);
+                enrichLocationTasksMapped(); // flag which tasks have SketchUp models assigned
+                await fetchLocationDefects(data.cp_floor, data.cp_zone_room);
+              } catch (e) { console.error(e); locationTasks.value = []; currentLocation.value = null; locationDefects.value = []; }
+            } else if (data.is_defect && data.cp_defect_code) {
+              // Mapped Defect Component: look up defect by number_code
+              try {
+                const res = await fetch(`${API_URL}/defects/lookup?floor=${encodeURIComponent(data.cp_floor)}&zone_room=${encodeURIComponent(data.cp_zone_room)}&number_code=${encodeURIComponent(data.cp_defect_code)}`);
+                currentDefect.value = await res.json();
+              } catch (e) { console.error(e); }
+            } else {
+              // Mapped Job Component: look up single task
+              try {
+                const res = await fetch(`${API_URL}/tasks/lookup?floor=${encodeURIComponent(data.cp_floor)}&zone_room=${encodeURIComponent(data.cp_zone_room)}&job_type=${encodeURIComponent(data.cp_job_type)}`);
+                currentTask.value = processTaskDates(await res.json());
+              } catch (e) { console.error(e); }
+            }
+          } else if (data.type === 'ComponentInstance' && data.cp_floor && data.cp_zone_room && data.cp_job_type) {
+            const res = await fetch(`${API_URL}/tasks/lookup?floor=${encodeURIComponent(data.cp_floor)}&zone_room=${encodeURIComponent(data.cp_zone_room)}&job_type=${encodeURIComponent(data.cp_job_type)}`);
+            currentTask.value = processTaskDates(await res.json());
+          }
+
+          if (data.type === 'Group' && !data.mapped) {
+            await fetchLocations();
+          } else if (data.type === 'ComponentInstance' && !data.mapped) {
+            await fetchTasks();
+            if (data.parent_floor && data.parent_zone_room) {
+              tasks.value = tasks.value.filter(t =>
+                t.location.floor === data.parent_floor && t.location.zone_room === data.parent_zone_room
+              );
+            }
+          }
+        };
+
+        onMounted(async () => {
+          // Initialize with first tab
+          await switchTab('inspector');
+        });
+
+        return {
+          loading, activeTab, modal, showAlert, showConfirm,
+          authUser, isEditor, showLoginOverlay, doSignOut,
+          selection, locations, tasks, searchQuery,
+          selectedLocationId, selectedTaskId, currentTask, currentLocation, locationTasks,
+          reportTasks, historyDate, filters, sort, dropdowns, statusMessage, loadingHeatmap,
+          allMappedTaskKeys, expandedGroups, groupedReportTasks,
+          uniqueFloors, uniqueZones, uniqueJobTypes, uniqueSuppliers, uniqueProgresses,
+          sortedFilteredReportTasks, filteredLocations, filteredTasks,
+          setFilter, hideDropdown, toggleSort, resetFilters, applyFilters,
+          downloadCsv, downloadExcel, fetchHistory, clearHistory,
+          assignLocation, assignTask, unassignItem, saveTask, saveLocation, saveGroupLocation,
+          uploadImages, deleteImage, unhideAll, refreshHeatmap, zoomToTask, zoomToZone,
+          switchTab, markUpdated, uploadingImages,
+          toggleGroup, expandAll, collapseAll, redrawModel,
+          // Defect
+          locationDefects, currentDefect, defectUpdated, showAddDefectForm, assignMode,
+          assignableDefects, selectedDefectId, uploadingDefectImages, defectSort, defectForm,
+          sortedLocationDefects, toggleDefectSort, onDefectFormTaskChange,
+          createDefect, deleteDefect, openDefectDetail, saveDefect,
+          loadDefectsForAssign, assignDefect, unassignDefectItem,
+          uploadDefectImages, deleteDefectImage,
+          // NCR
+          ncrStats, ncrByTaskId, ncrByTaskIdReport, ncrByGroupKey,
+          // Zoom navigators
+          zoomToJobFromZone, zoomToDefectItem,
+          // Web browser integration
+          inSketchup,
+          // Columns
+          hiddenColumns, showColDropdown, toggleColumn, hidableColumnsList,
+          // Date formatter
+          fmtDate
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+
+</html>

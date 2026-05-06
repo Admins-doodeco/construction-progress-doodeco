@@ -1,0 +1,4 @@
+✅ Firebase Admin initialized with service account.
+Construction Progress Backend running on http://localhost:3001
+Bucket 'construction-images' already exists.
+Public read policy applied to 'construction-images'.
