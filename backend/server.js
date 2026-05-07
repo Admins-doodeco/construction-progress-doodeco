@@ -1168,14 +1168,34 @@ app.post('/api/import-excel', editorOrApiKey, uploadMemory.single('file'), async
     const locMap = {};
     locations.forEach(l => locMap[`${l.floor}||${l.zone_room}`] = l.id);
 
+    // Pre-fetch all tasks to avoid N+1 query problem (the main cause of slowness on Vercel)
+    const allTasks = await prisma.task.findMany();
+    const taskMap = {};
+    allTasks.forEach(t => taskMap[`${t.location_id}||${t.job_type}`] = t);
+
+    const formatDate = (val) => {
+      if (!val) return null;
+      if (val instanceof Date) {
+        if (isNaN(val.getTime())) return null;
+        const m = val.getMonth() + 1;
+        const d = val.getDate();
+        return `${val.getFullYear()}-${m < 10 ? '0'+m : m}-${d < 10 ? '0'+d : d}`;
+      }
+      return String(val);
+    };
+
     const updates = [];
+    const todayStr = new Date().toISOString().split('T')[0];
 
     for (let rowNum = 3; rowNum <= sheet.rowCount; rowNum++) {
       const row = sheet.getRow(rowNum);
-      const floor = row.getCell(1).value;
-      const zone = row.getCell(2).value;
+      const floorValue = row.getCell(1).value;
+      const zoneValue = row.getCell(2).value;
 
-      if (!floor || !zone || (typeof zone === 'string' && zone.includes('Zones'))) continue;
+      const floor = floorValue ? String(floorValue).trim() : null;
+      const zone = zoneValue ? String(zoneValue).trim() : null;
+
+      if (!floor || !zone || zone.includes('Zones')) continue;
 
       const locId = locMap[`${floor}||${zone}`];
       if (!locId) continue;
@@ -1193,20 +1213,7 @@ app.post('/api/import-excel', editorOrApiKey, uploadMemory.single('file'), async
           if (!isNaN(num)) progress = String(num);
         }
 
-        const formatDate = (val) => {
-          if (!val) return null;
-          if (val instanceof Date) {
-            if (isNaN(val.getTime())) return null;
-            const m = val.getMonth() + 1;
-            const d = val.getDate();
-            return `${val.getFullYear()}-${m < 10 ? '0'+m : m}-${d < 10 ? '0'+d : d}`;
-          }
-          return String(val);
-        };
-
-        const existingTask = await prisma.task.findFirst({
-          where: { location_id: locId, job_type: jobType }
-        });
+        const existingTask = taskMap[`${locId}||${jobType}`];
 
         if (existingTask) {
           const parsedStartDate = formatDate(startDate);
@@ -1227,7 +1234,7 @@ app.post('/api/import-excel', editorOrApiKey, uploadMemory.single('file'), async
                 start_date: parsedStartDate,
                 finish_date: parsedFinishDate,
                 material: parsedMaterial,
-                updated_date: new Date().toISOString().split('T')[0]
+                updated_date: todayStr
               }
             }));
           }
