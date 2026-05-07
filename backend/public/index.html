@@ -4,83 +4,78 @@
 <head>
   <meta charset="UTF-8">
   <title>Construction Progress Inspector & Report</title>
-  <!-- CONFIG_INJECTION -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    window.tailwind.config = {
-      plugins: [
-        function ({ addComponents }) {
-          addComponents({
-            '.btn': {
-              '@apply px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg shadow hover:shadow-md hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold text-sm active:scale-95': {},
-            },
-            '.btn-red': {
-              '@apply px-3 py-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-200 transition-colors duration-200 text-sm font-semibold border border-red-200 active:scale-95': {},
-            },
-            '.input-field': {
-              '@apply mt-1 block w-full rounded-lg border border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 sm:text-sm px-3 py-2 bg-white text-slate-800 transition-all duration-200': {},
-            },
-            '.label': {
-              '@apply block text-xs font-bold text-slate-500 mb-1 tracking-wider uppercase': {},
-            },
-            '.card': {
-              '@apply bg-white p-5 rounded-xl shadow border border-slate-100': {},
-            },
-            '.table-input': {
-              '@apply w-full min-w-0 text-xs p-1.5 border border-slate-200 rounded focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 bg-slate-50 hover:bg-white transition-all duration-200 text-slate-800': {},
-            }
-          })
-        }
-      ]
-    }
-  </script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <!-- Firebase Auth SDK (compat for CDN/WebView) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <style type="text/tailwindcss">
-    @layer base {
-      body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        background-color: #f8fafc;
-        overflow-x: hidden;
-      }
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f8fafc;
+      overflow-x: hidden;
+    }
 
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
+    .btn {
+      @apply px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg shadow hover:shadow-md hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold text-sm active:scale-95;
+    }
 
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
+    .btn-red {
+      @apply px-3 py-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-200 transition-colors duration-200 text-sm font-semibold border border-red-200 active:scale-95;
+    }
 
-      ::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 4px;
-      }
+    .input-field {
+      @apply mt-1 block w-full rounded-lg border border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 sm:text-sm px-3 py-2 bg-white text-slate-800 transition-all duration-200;
+    }
 
-      ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-      }
+    .label {
+      @apply block text-xs font-bold text-slate-500 mb-1 tracking-wider uppercase;
+    }
 
-      th {
-        resize: horizontal;
-        overflow: hidden;
-        position: relative;
-      }
+    .card {
+      @apply bg-white p-5 rounded-xl shadow border border-slate-100;
+    }
 
-      th::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        width: 4px;
-        cursor: col-resize;
-      }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+
+
+    .table-input {
+      @apply w-full min-w-0 text-xs p-1.5 border border-slate-200 rounded focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 bg-slate-50 hover:bg-white transition-all duration-200 text-slate-800;
+    }
+
+    th {
+      resize: horizontal;
+      overflow: hidden;
+      position: relative;
+    }
+
+    th::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      cursor: col-resize;
     }
   </style>
 </head>
@@ -1199,28 +1194,37 @@
   </div>
 
   <script>
-    const config = window.__APP_CONFIG__ || { apiKey: 'CP-SKETCHUP-SECRET-KEY-2024', firebase: {} };
-    let API_URL = config.apiUrl || (window.location.origin + '/api');
-    let API_KEY = config.apiKey;
+    const API_URL = 'https://construction-progress-doodeco.vercel.app/api';
+    const API_KEY = 'CP-SKETCHUP-SECRET-KEY-2024';
 
     // ── Firebase Configuration ─────────────────────────────────────────────
-    let firebaseConfig = config.firebase || {};
+    // REPLACE these values with your Firebase project config after creating
+    // the project in Firebase Console (Project Settings > Your apps > Web)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDL4MsO8pbOZiEcILPH7aXO9OZ-a5EdY_c",
+      authDomain: "bim-construction-progress.firebaseapp.com",
+      projectId: "bim-construction-progress",
+      storageBucket: "bim-construction-progress.firebasestorage.app",
+      messagingSenderId: "489806675712",
+      appId: "1:489806675712:web:3647357179216f5a107de5",
+      measurementId: "G-KE5DVZ1VET"
+    };
+
+    // Initialize Firebase (only if config is filled in)
     let firebaseAuth = null;
-
-    // Initialize Firebase
-    if (firebaseConfig.apiKey) {
-      firebase.initializeApp(firebaseConfig);
-      firebaseAuth = firebase.auth();
-      console.log('✅ Firebase initialized from injected config.');
-    }
-
-    // Initialize config loading (noop for compatibility)
-    const configPromise = Promise.resolve();
-
-
-
     let currentFirebaseUser = null;
     let currentIdToken = null;
+
+    try {
+      if (firebaseConfig.apiKey !== 'REPLACE_WITH_YOUR_API_KEY') {
+        firebase.initializeApp(firebaseConfig);
+        firebaseAuth = firebase.auth();
+      } else {
+        console.warn('⚠️ Firebase not configured. Update firebaseConfig in inspector.html.');
+      }
+    } catch (e) {
+      console.error('Firebase init failed:', e);
+    }
 
     // Login overlay controls
     function showAuthOverlay() {
@@ -2411,7 +2415,6 @@
         };
 
         onMounted(async () => {
-          await configPromise; // Wait for config
           // Initialize with first tab
           await switchTab('inspector');
         });
