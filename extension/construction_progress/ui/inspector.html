@@ -178,22 +178,49 @@
           </svg>
           Import Progress
         </button>
-        <button v-if="activeTab === 'report'" @click="downloadExcel"
-          class="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-semibold text-sm transition-colors mr-3">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-          </svg>
-          Export Progress
-        </button>
-        <button v-if="activeTab === 'report'" @click="downloadCsv"
-          class="flex items-center gap-1 text-emerald-600 hover:text-emerald-800 font-semibold text-sm transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-          </svg>
-          Export CSV
-        </button>
+        <!-- Export Dropdown -->
+        <div v-if="activeTab === 'report'" class="relative">
+          <button @click="showExportDropdown = !showExportDropdown"
+            class="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-semibold text-sm transition-colors mr-3 h-8 px-2 rounded hover:bg-blue-50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            <span>Export</span>
+            <svg class="w-3 h-3 transition-transform duration-200" :class="showExportDropdown ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          
+          <!-- Dropdown Menu -->
+          <transition enter-active-class="transition duration-100 ease-out" enter-from-class="transform scale-95 opacity-0" enter-to-class="transform scale-100 opacity-100" leave-active-class="transition duration-75 ease-in" leave-from-class="transform scale-100 opacity-100" leave-to-class="transform scale-95 opacity-0">
+            <div v-if="showExportDropdown" v-click-outside="() => showExportDropdown = false"
+              class="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-xl border border-gray-200 z-[100] py-1.5 overflow-hidden">
+              <div class="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Format</div>
+              <button @click="downloadExcel(); showExportDropdown = false" 
+                class="w-full text-left px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 font-bold flex items-center gap-2 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Progress by all (.xlsx)
+              </button>
+              <button @click="openExportRoomModal(); showExportDropdown = false" 
+                class="w-full text-left px-3 py-2 text-xs text-purple-600 hover:bg-purple-50 font-bold flex items-center gap-2 transition-colors border-t border-gray-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                Progress by room (.xlsx)
+              </button>
+              <button @click="downloadCsv(); showExportDropdown = false" 
+                class="w-full text-left px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50 font-bold flex items-center gap-2 transition-colors border-t border-gray-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+                CSV (.csv)
+              </button>
+            </div>
+          </transition>
+        </div>
         <!-- Unhide All button: always visible as a safety net -->
         <button v-if="inSketchup" @click="unhideAll"
           class="flex items-center gap-1 text-amber-600 hover:text-amber-800 font-semibold text-sm transition-colors">
@@ -246,6 +273,21 @@
             class="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded transition-colors">Cancel</button>
           <button @click="modal.onConfirm"
             class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Room Excel Modal -->
+    <div v-if="exportRoomModal.show" class="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-40">
+      <div class="bg-white rounded-lg shadow-xl p-5 max-w-sm w-full mx-4 border border-gray-200">
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Export Progress by Room</h3>
+        <p class="text-sm text-gray-600 mb-2">Select a date to display in the header:</p>
+        <input type="date" v-model="exportRoomModal.date" class="w-full border border-gray-300 rounded p-2 mb-4 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
+        <div class="flex justify-end gap-2">
+          <button @click="exportRoomModal.show = false"
+            class="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded transition-colors">Cancel</button>
+          <button @click="confirmDownloadExcelByRoom"
+            class="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded transition-colors">Export</button>
         </div>
       </div>
     </div>
@@ -1007,7 +1049,7 @@
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
             <th @click="toggleSort('area_remaining', $event)"
-              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('area_remaining')">
+              class="px-2 py-2 text-center font-bold text-gray-600 uppercase tracking-tighter border-b border-gray-200 w-[100px] min-w-[50px] cursor-pointer hover:bg-gray-200 transition-colors" v-show="!hiddenColumns.includes('area_remaining')">
               <div class="flex items-center justify-center gap-1">Area Rem. <span v-if="sort.key === 'area_remaining'"
                   class="text-[8px]">{{ sort.order === 'asc' ? '▲' : '▼' }}</span></div>
             </th>
@@ -1073,12 +1115,12 @@
                 <td class="px-2 py-2 font-bold text-indigo-800">{{ group.floor }}</td>
                 <td class="px-2 py-2 font-bold text-indigo-700">{{ group.zone }}</td>
                 <td class="px-2 py-2 text-[10px] text-gray-500 italic">{{ group.tasks.length }} job(s)</td>
-                <td class="px-2 py-2 font-bold text-indigo-700 text-right">{{ group.avgProgress }}%</td>
-                <td class="px-2 py-2 text-gray-600 text-right">{{ group.sumAreaFinish }}</td>
-                <td class="px-2 py-2 text-gray-600">{{ group.sumAreaRemaining }}</td>
+                <td class="px-2 py-2 font-bold text-indigo-700 text-right" v-show="!hiddenColumns.includes('progress')">{{ group.avgProgress }}%</td>
+                <td class="px-2 py-2 text-gray-600 text-right" v-show="!hiddenColumns.includes('area_finish')">{{ group.sumAreaFinish }}</td>
+                <td class="px-2 py-2 text-gray-600 text-right" v-show="!hiddenColumns.includes('area_remaining')">{{ group.sumAreaRemaining }}</td>
                 <td class="px-2 py-2 text-gray-700 font-medium text-[10px]" v-show="!hiddenColumns.includes('start_date')">{{ fmtDate(group.minStartDate) }}</td> <!-- Start Date -->
                 <td class="px-2 py-2 text-gray-700 font-medium text-[10px]" v-show="!hiddenColumns.includes('finish_date')">{{ fmtDate(group.maxFinishDate) }}</td> <!-- Finish Date -->
-                <td class="px-2 py-2 text-gray-600" v-show="!hiddenColumns.includes('material')"></td> <!-- Material -->
+                <td class="px-2 py-2 font-bold text-gray-600 text-right" v-show="!hiddenColumns.includes('material')">{{ group.avgMaterial !== '' ? group.avgMaterial + '%' : '' }}</td> <!-- Material -->
                 <td class="px-2 py-2 text-gray-600" v-show="!hiddenColumns.includes('supplier')"></td> <!-- Supplier -->
                 <td class="px-2 py-2 text-gray-600" v-show="!hiddenColumns.includes('as_built')"> <!-- AS-BUILT -->
                   <select v-model="group.as_built" @change="saveGroupLocation(group)" @click.stop class="bg-transparent font-bold text-blue-700 outline-none w-[90px] cursor-pointer" :disabled="!isEditor || !!historyDate">
@@ -1123,28 +1165,42 @@
                     @click="zoomToTask(task)">{{ task.job_type }}</td>
                   <td class="px-1 py-1" v-show="!hiddenColumns.includes('progress')">
                     <div class="relative flex items-center justify-end w-full h-full min-h-[24px]">
-                      <input type="text" v-model="task.progress" @input="markUpdated(task)" :disabled="!!historyDate"
+                      <input type="text" v-model="task.progress" @input="markUpdated(task)" @change="saveTask(task)" :disabled="!!historyDate"
                         class="peer table-input text-right font-bold w-full h-full bg-transparent text-transparent focus:text-blue-700 focus:bg-white z-10">
                       <span class="absolute inset-y-0 right-1 flex items-center pointer-events-none font-bold text-blue-700 peer-focus:opacity-0 z-0">
                         {{ task.progress ? task.progress + '%' : '' }}
                       </span>
                     </div>
                   </td>
-                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('area_finish')"><input type="text" v-model="task.area_finish" @input="markUpdated(task)"
-                      :disabled="!!historyDate" class="table-input text-right"></td>
-                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('area_remaining')"><input type="text" v-model="task.area_remaining" :title="task.area_remaining"
-                      @input="markUpdated(task)" :disabled="!!historyDate" class="table-input"></td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('area_finish')">
+                    <div class="relative flex items-center justify-end w-full h-full min-h-[24px]">
+                      <input type="text" v-model="task.area_finish" @input="markUpdated(task)" @change="saveTask(task)" :disabled="!!historyDate"
+                        class="peer table-input text-right w-full h-full bg-transparent text-transparent focus:text-gray-700 focus:bg-white z-10">
+                      <span class="absolute inset-y-0 right-1 flex items-center pointer-events-none text-gray-700 peer-focus:opacity-0 z-0">
+                        {{ task.area_finish || '' }}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="px-1 py-1" v-show="!hiddenColumns.includes('area_remaining')">
+                    <div class="relative flex items-center justify-end w-full h-full min-h-[24px]">
+                      <input type="text" v-model="task.area_remaining" :title="task.area_remaining" @input="markUpdated(task)" @change="saveTask(task)" :disabled="!!historyDate"
+                        class="peer table-input text-right w-full h-full bg-transparent text-transparent focus:text-gray-700 focus:bg-white z-10">
+                      <span class="absolute inset-y-0 right-1 flex items-center pointer-events-none text-gray-700 peer-focus:opacity-0 z-0">
+                        {{ task.area_remaining || '' }}
+                      </span>
+                    </div>
+                  </td>
                   <td class="px-1 py-1" v-show="!hiddenColumns.includes('start_date')">
-                    <input type="date" v-model="task.start_date" @input="markUpdated(task)"
+                    <input type="date" v-model="task.start_date" @input="markUpdated(task)" @change="saveTask(task)"
                       :disabled="!!historyDate" class="table-input" :title="fmtDate(task.start_date)">
                   </td>
                   <td class="px-1 py-1" v-show="!hiddenColumns.includes('finish_date')">
-                    <input type="date" v-model="task.finish_date" @input="markUpdated(task)"
+                    <input type="date" v-model="task.finish_date" @input="markUpdated(task)" @change="saveTask(task)"
                       :disabled="!!historyDate" class="table-input" :title="fmtDate(task.finish_date)">
                   </td>
                   <td class="px-1 py-1" v-show="!hiddenColumns.includes('material')">
                     <div class="relative flex items-center justify-end w-full h-full min-h-[24px]">
-                      <input type="text" v-model="task.material" @input="markUpdated(task)" :disabled="!!historyDate"
+                      <input type="text" v-model="task.material" @input="markUpdated(task)" @change="saveTask(task)" :disabled="!!historyDate"
                         class="peer table-input text-right w-full h-full bg-transparent text-transparent focus:text-gray-700 focus:bg-white z-10">
                       <span class="absolute inset-y-0 right-1 flex items-center pointer-events-none text-gray-700 peer-focus:opacity-0 z-0">
                         {{ task.material ? task.material + '%' : '' }}
@@ -1165,7 +1221,7 @@
                     <span v-else class="text-gray-300 text-[10px]">—</span>
                   </td>
                   <td class="px-1 py-1" v-show="!hiddenColumns.includes('remark')"><input type="text" v-model="task.remark" :title="task.remark"
-                      @input="markUpdated(task)" :disabled="!!historyDate" class="table-input"></td>
+                      @input="markUpdated(task)" @change="saveTask(task)" :disabled="!!historyDate" class="table-input"></td>
                   <td class="px-1 py-1" v-show="!hiddenColumns.includes('updated_date')">
                     <input type="date" v-model="task.updated_date" :disabled="!!historyDate"
                       class="table-input bg-amber-50/50 font-bold text-indigo-700" :title="fmtDate(task.updated_date)">
@@ -1363,6 +1419,7 @@
         const activeTab = ref(inSketchup.value ? 'inspector' : 'report');
 
         const modal = ref({ show: false, type: 'alert', title: '', message: '', onConfirm: null, onCancel: null });
+        const exportRoomModal = ref({ show: false, date: new Date().toISOString().split('T')[0] });
 
         const showAlert = (title, message) => {
           modal.value = {
@@ -1656,6 +1713,7 @@
         
         const hiddenColumns = ref([]);
         const showColDropdown = ref(false);
+        const showExportDropdown = ref(false);
         const toggleColumn = (col) => {
           const idx = hiddenColumns.value.indexOf(col);
           if (idx > -1) hiddenColumns.value.splice(idx, 1);
@@ -1834,6 +1892,16 @@
 
         const downloadExcel = () => {
           window.location.href = `${API_URL}/export-excel`;
+        };
+
+        const openExportRoomModal = () => {
+          exportRoomModal.value.date = new Date().toISOString().split('T')[0];
+          exportRoomModal.value.show = true;
+        };
+
+        const confirmDownloadExcelByRoom = () => {
+          exportRoomModal.value.show = false;
+          window.location.href = `${API_URL}/export-excel-by-room?date=${exportRoomModal.value.date}`;
         };
 
         const downloadCsv = () => {
@@ -2020,8 +2088,14 @@
 
           let groups = Object.values(groupMap).map(g => {
             const nums = (arr) => arr.map(v => parseFloat(v) || 0);
-            const progNums = nums(g.tasks.map(t => String(t.progress || '0').replace('%', '')));
+            const progValidTasks = g.tasks.filter(t => t.progress !== null && t.progress !== undefined && String(t.progress).trim() !== '');
+            const progNums = nums(progValidTasks.map(t => String(t.progress).replace('%', '')));
             g.avgProgress = progNums.length ? Math.round(progNums.reduce((a, b) => a + b, 0) / progNums.length) : 0;
+
+            const matValidTasks = g.tasks.filter(t => t.material !== null && t.material !== undefined && String(t.material).trim() !== '');
+            const matNums = nums(matValidTasks.map(t => String(t.material).replace('%', '')));
+            g.avgMaterial = matNums.length ? Math.round(matNums.reduce((a, b) => a + b, 0) / matNums.length) : '';
+
             const sumFinish = nums(g.tasks.map(t => t.area_finish)).reduce((a, b) => a + b, 0);
             g.sumAreaFinish = sumFinish ? Number(sumFinish.toFixed(2)) : '';
             const sumRem = nums(g.tasks.map(t => t.area_remaining)).reduce((a, b) => a + b, 0);
@@ -2043,6 +2117,7 @@
             let valA, valB;
             if (sort.value.key === 'model') { valA = a.modelRatio; valB = b.modelRatio; }
             else if (sort.value.key === 'progress') { valA = a.avgProgress; valB = b.avgProgress; }
+            else if (sort.value.key === 'material') { valA = a.avgMaterial; valB = b.avgMaterial; }
             else if (sort.value.key === 'area_finish') { valA = a.sumAreaFinish; valB = b.sumAreaFinish; }
             else if (sort.value.key === 'area_remaining') { valA = a.sumAreaRemaining; valB = b.sumAreaRemaining; }
             // Do not sort group by dates
@@ -2429,7 +2504,7 @@
           uniqueFloors, uniqueZones, uniqueJobTypes, uniqueSuppliers, uniqueProgresses,
           sortedFilteredReportTasks, filteredLocations, filteredTasks,
           setFilter, hideDropdown, toggleSort, resetFilters, applyFilters,
-          downloadCsv, downloadExcel, handleFileUpload, importingExcel, fileInput, fetchHistory, clearHistory,
+          downloadCsv, downloadExcel, openExportRoomModal, confirmDownloadExcelByRoom, handleFileUpload, importingExcel, fileInput, fetchHistory, clearHistory,
           assignLocation, assignTask, unassignItem, saveTask, saveLocation, saveGroupLocation,
           uploadImages, deleteImage, unhideAll, refreshHeatmap, zoomToTask, zoomToZone,
           switchTab, markUpdated, uploadingImages,
@@ -2449,9 +2524,24 @@
           inSketchup,
           // Columns
           hiddenColumns, showColDropdown, toggleColumn, hidableColumnsList,
+          showExportDropdown,
           // Date formatter
-          fmtDate
+          fmtDate,
+          // Modals
+          exportRoomModal
         };
+      }
+    }).directive('click-outside', {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function (event) {
+          if (!(el == event.target || el.contains(event.target))) {
+            binding.value(event);
+          }
+        };
+        document.body.addEventListener('click', el.clickOutsideEvent, true);
+      },
+      unmounted(el) {
+        document.body.removeEventListener('click', el.clickOutsideEvent, true);
       }
     }).mount('#app');
   </script>

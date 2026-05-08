@@ -1136,6 +1136,202 @@ app.get('/api/export-excel', async (req, res) => {
   }
 });
 
+// Export Progress By Room
+app.get('/api/export-excel-by-room', async (req, res) => {
+  try {
+    const qDateStr = req.query.date || new Date().toISOString().split('T')[0];
+    const dParts = qDateStr.split('-');
+    const displayDate = dParts.length === 3 ? `${dParts[2]}/${dParts[1]}/${dParts[0]}` : qDateStr;
+
+    const locations = await prisma.location.findMany({
+      include: { tasks: { orderBy: { job_type: 'asc' } } },
+      orderBy: [{ floor: 'asc' }, { zone_room: 'asc' }]
+    });
+
+    const floors = {};
+    locations.forEach(loc => {
+      if (!floors[loc.floor]) floors[loc.floor] = [];
+      floors[loc.floor].push(loc);
+    });
+
+    const workbook = new ExcelJS.Workbook();
+    
+    const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F7FA' } }; // Light cyan/blue
+    const borderAll = {
+      top: { style: 'thin' }, left: { style: 'thin' },
+      bottom: { style: 'thin' }, right: { style: 'thin' }
+    };
+    const centerAlign = { vertical: 'middle', horizontal: 'center' };
+    const leftAlign = { vertical: 'middle', horizontal: 'left' };
+
+    for (const [floorName, floorLocations] of Object.entries(floors)) {
+      // Create sheet with name truncated to 31 chars max
+      const safeSheetName = `${floorName} site walk print`.replace(/[\\\/\?\*\[\]]/g, '').substring(0, 31);
+      const sheet = workbook.addWorksheet(safeSheetName);
+      
+      sheet.columns = [
+        { width: 18 }, // A: Floor
+        { width: 45 }, // B: Zone / Job Type
+        { width: 15 }, // C: Start
+        { width: 15 }, // D: Finish
+        { width: 22 }, // E: Progress
+        { width: 20 }, // F: Progress by Room
+        { width: 25 }  // G: Completion Date by Room
+      ];
+
+      let rowNum = 1;
+
+      for (const loc of floorLocations) {
+        const tasks = loc.tasks;
+        if (!tasks || tasks.length === 0) continue;
+
+        // Room Header
+        const headerRow = sheet.getRow(rowNum);
+        headerRow.getCell(1).value = floorName;
+        headerRow.getCell(1).font = { bold: true };
+        headerRow.getCell(1).fill = headerFill;
+        headerRow.getCell(1).border = borderAll;
+        headerRow.getCell(1).alignment = centerAlign;
+
+        headerRow.getCell(2).value = loc.zone_room;
+        headerRow.getCell(2).font = { bold: true };
+        headerRow.getCell(2).fill = headerFill;
+        headerRow.getCell(2).border = borderAll;
+        headerRow.getCell(2).alignment = centerAlign;
+
+        headerRow.getCell(3).value = 'Start';
+        headerRow.getCell(3).font = { bold: true };
+        headerRow.getCell(3).fill = headerFill;
+        headerRow.getCell(3).border = borderAll;
+        headerRow.getCell(3).alignment = centerAlign;
+
+        headerRow.getCell(4).value = 'Finish';
+        headerRow.getCell(4).font = { bold: true };
+        headerRow.getCell(4).fill = headerFill;
+        headerRow.getCell(4).border = borderAll;
+        headerRow.getCell(4).alignment = centerAlign;
+
+        headerRow.getCell(5).value = `Progress (${displayDate})`;
+        headerRow.getCell(5).font = { bold: true };
+        headerRow.getCell(5).fill = headerFill;
+        headerRow.getCell(5).border = borderAll;
+        headerRow.getCell(5).alignment = centerAlign;
+
+        headerRow.getCell(6).value = 'Progress by Room';
+        headerRow.getCell(6).font = { bold: true };
+        headerRow.getCell(6).fill = headerFill;
+        headerRow.getCell(6).border = borderAll;
+        headerRow.getCell(6).alignment = centerAlign;
+
+        headerRow.getCell(7).value = 'Completion Date by Room';
+        headerRow.getCell(7).font = { bold: true };
+        headerRow.getCell(7).fill = headerFill;
+        headerRow.getCell(7).border = borderAll;
+        headerRow.getCell(7).alignment = centerAlign;
+
+        rowNum++;
+        const startTaskRow = rowNum;
+
+        let roomProgressSum = 0;
+        let roomJobCount = 0;
+        let roomMaxDate = null;
+
+        tasks.forEach(task => {
+          const taskRow = sheet.getRow(rowNum);
+          taskRow.getCell(1).value = '';
+          taskRow.getCell(1).border = borderAll;
+
+          taskRow.getCell(2).value = task.job_type || '-';
+          taskRow.getCell(2).border = borderAll;
+          taskRow.getCell(2).alignment = leftAlign;
+
+          const startVal = task.start_date || '-';
+          const finishVal = task.finish_date || '-';
+          const progStr = task.progress ? String(task.progress).replace('%', '').trim() : '';
+          const progVal = progStr !== '' ? parseFloat(progStr) : null;
+          
+          taskRow.getCell(3).value = startVal;
+          taskRow.getCell(3).border = borderAll;
+          taskRow.getCell(3).alignment = centerAlign;
+
+          taskRow.getCell(4).value = finishVal;
+          taskRow.getCell(4).border = borderAll;
+          taskRow.getCell(4).alignment = centerAlign;
+
+          taskRow.getCell(5).value = (progVal !== null && !isNaN(progVal)) ? `${progVal}%` : '-';
+          taskRow.getCell(5).border = borderAll;
+          taskRow.getCell(5).alignment = centerAlign;
+
+          if (progVal !== null && !isNaN(progVal)) {
+            roomProgressSum += progVal;
+            roomJobCount++;
+          }
+
+          if (task.finish_date) {
+            let taskFinishObj;
+            if (task.finish_date.includes('-')) {
+                taskFinishObj = new Date(task.finish_date);
+            } else if (task.finish_date.includes('/')) {
+                const parts = task.finish_date.split('/');
+                if (parts.length === 3) {
+                    taskFinishObj = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                }
+            } else {
+                taskFinishObj = new Date(task.finish_date);
+            }
+            
+            if (taskFinishObj && !isNaN(taskFinishObj.getTime())) {
+                if (!roomMaxDate) {
+                   roomMaxDate = { str: task.finish_date, date: taskFinishObj };
+                } else {
+                   if (taskFinishObj > roomMaxDate.date) {
+                       roomMaxDate = { str: task.finish_date, date: taskFinishObj };
+                   }
+                }
+            }
+          }
+          
+          rowNum++;
+        });
+        
+        const endTaskRow = rowNum - 1;
+        
+        const avgRoomProg = roomJobCount > 0 ? (roomProgressSum / roomJobCount).toFixed(0) : 0;
+        
+        if (startTaskRow < endTaskRow) {
+            sheet.mergeCells(startTaskRow, 6, endTaskRow, 6);
+            sheet.mergeCells(startTaskRow, 7, endTaskRow, 7);
+        }
+        if (startTaskRow <= endTaskRow) {
+            const pbrCell = sheet.getCell(startTaskRow, 6);
+            pbrCell.value = roomJobCount > 0 ? `${avgRoomProg}%` : '-';
+            pbrCell.border = borderAll;
+            pbrCell.alignment = centerAlign;
+            
+            const cbrCell = sheet.getCell(startTaskRow, 7);
+            cbrCell.value = roomMaxDate ? roomMaxDate.str : '-';
+            cbrCell.border = borderAll;
+            cbrCell.alignment = centerAlign;
+
+            for (let r = startTaskRow; r <= endTaskRow; r++) {
+               sheet.getCell(r, 6).border = borderAll;
+               sheet.getCell(r, 7).border = borderAll;
+            }
+        }
+      }
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=progress_by_room_${qDateStr}.xlsx`);
+    
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Export by room error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Import Report from Excel
 app.post('/api/import-excel', editorOrApiKey, uploadMemory.single('file'), async (req, res) => {
   try {
@@ -1261,6 +1457,10 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ error: err.message || 'Internal Server Error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Construction Progress Backend running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Construction Progress Backend running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
